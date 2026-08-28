@@ -17,10 +17,10 @@ Octura 把 AI 辅助开发过程中的意图、需求、决策、代码引用、
 
 ```bash
 docker compose up --build -d
-docker compose exec octura octura demo seed
+docker compose exec octura octura demo seed --profile specloop-core
 ```
 
-打开 [http://localhost:3000](http://localhost:3000)。
+打开 [SpecLoop Core 演示项目](http://localhost:3000/?project=specloop-core)。不加 `--profile` 时仍会生成通用的 `octura-demo` 项目。
 
 Web 工作台右上角支持中文 / English 即时切换，并会记住选择。系统文案随语言切换，项目和证据内容保留采集时的原文。
 
@@ -65,7 +65,7 @@ docker compose exec octura octura record review --project octura-demo --id <reco
 
 ```text
 octura doctor
-octura demo seed [--project <slug>]
+octura demo seed [--profile octura|specloop-core] [--project <slug>]
 
 octura project create --slug <slug> --name <name>
 octura project list

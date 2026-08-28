@@ -19,6 +19,7 @@ const { positionals, values } = parseArgs({
     slug: { type: "string", short: "s" },
     name: { type: "string", short: "n" },
     description: { type: "string", short: "d" },
+    profile: { type: "string" },
     project: { type: "string", short: "p" },
     kind: { type: "string", short: "k" },
     title: { type: "string", short: "t" },
@@ -77,6 +78,7 @@ function help() {
 ${bold("开始")}
   octura doctor
   octura demo seed
+  octura demo seed --profile specloop-core
 
 ${bold("项目")}
   octura project create --slug octura-demo --name "Octura 中文演示"
@@ -111,7 +113,14 @@ async function main() {
   if (domain === "demo" && action === "seed") {
     const result = await request<{ project: { slug: string; name: string }; records: unknown[]; dashboardUrl: string }>(
       "/api/demo/seed",
-      { method: "POST", body: JSON.stringify({ slug: projectSlug(), name: values.name }) },
+      {
+        method: "POST",
+        body: JSON.stringify({
+          profile: values.profile,
+          slug: values.project ?? values.slug,
+          name: values.name,
+        }),
+      },
     );
     return output(result, () => {
       console.log(`${green("✓")} 已为 ${bold(result.project.name)} 生成 ${result.records.length} 条证据记录`);
