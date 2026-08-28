@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Octura 去品牌露出重点区域对照</title>
+    <style>
+      * { box-sizing: border-box; }
+      body { margin: 0; background: #160a32; color: white; font-family: "PingFang SC", "Microsoft YaHei", sans-serif; }
+      main { width: 1029px; height: 500px; padding: 22px; display: grid; grid-template-rows: 42px 1fr; gap: 12px; }
+      h1 { margin: 0; font-size: 19px; }
+      section { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; min-height: 0; }
+      article { position: relative; overflow: hidden; border-radius: 14px; border: 1px solid #4c3171; background: #f8f5fb; }
+      .label { position: absolute; z-index: 2; top: 12px; left: 12px; padding: 6px 9px; border-radius: 999px; background: rgba(35,13,74,.9); font-size: 10px; font-weight: 700; }
+      img { position: absolute; max-width: none; height: auto; }
+      .before img { width: 607px; left: -118px; top: -28px; }
+      .after img { width: 615px; left: -125px; top: -37px; }
+      .caption { position: absolute; z-index: 2; left: 12px; right: 12px; bottom: 12px; padding: 8px 10px; border-radius: 8px; background: rgba(255,255,255,.95); color: #503c66; font-size: 10px; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>重点区域：导航、Hero 与指标卡片</h1>
+      <section>
+        <article class="before"><span class="label">调整前</span><img src="octura-fullstack-cn-viewport.png" alt="调整前重点区域" /><div class="caption">品牌 IP 与专属图标承担视觉注意力。</div></article>
+        <article class="after"><span class="label">调整后</span><img src="octura-purple-orange-no-brand.png" alt="调整后重点区域" /><div class="caption">视觉重心回到 Octura 名称、数据与审核动作。</div></article>
+      </section>
+    </main>
+  </body>
+</html>

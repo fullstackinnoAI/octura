@@ -7,15 +7,6 @@ const state = {
 
 const $ = (selector) => document.querySelector(selector);
 const $$ = (selector) => [...document.querySelectorAll(selector)];
-const kindIcons = {
-  conversation: "/assets/fullstack/21-icon-network.png",
-  requirement: "/assets/fullstack/23-icon-target.png",
-  decision: "/assets/fullstack/25-icon-compass.png",
-  code: "/assets/fullstack/24-icon-database.png",
-  test: "/assets/fullstack/22-icon-safety.png",
-  verification: "/assets/fullstack/27-data-gauge.png",
-  release: "/assets/fullstack/14-ip-success.png",
-};
 const kindNames = {
   conversation: "对话记录",
   requirement: "产品需求",
@@ -167,9 +158,7 @@ function renderEvidenceChain() {
   $("#evidence-chain").innerHTML = state.dashboard.summary.requiredKinds
     .map((kind) => {
       const count = counts[kind] ?? 0;
-      const stateIcon = count ? "/assets/fullstack/22-icon-safety.png" : "/assets/fullstack/26-icon-warning.png";
       return `<div class="chain-row ${count ? "present" : ""}">
-        <span class="chain-state"><img src="${stateIcon}" alt="" /></span>
         <span class="chain-name">${escapeHtml(formatKind(kind))}</span>
         <span class="chain-count">${count ? `${count} 条记录` : "缺失"}</span>
       </div>`;
@@ -189,8 +178,7 @@ function renderTimeline() {
       const metadataVerdict = record.metadata?.verdict
         ? `<span class="badge reviewed">${escapeHtml(formatVerdict(record.metadata.verdict))}</span>`
         : "";
-      return `<article class="record" data-id="${record.id}">
-        <div class="record-icon ${escapeHtml(record.kind)}"><img src="${kindIcons[record.kind] ?? kindIcons.conversation}" alt="" /></div>
+      return `<article class="record ${escapeHtml(record.kind)}" data-id="${record.id}">
         <div class="record-main">
           <div class="record-head">
             <div>

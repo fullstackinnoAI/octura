@@ -236,7 +236,7 @@ a { color: inherit; text-decoration: none; }
   .record-icon { width: 28px; height: 28px; }
 }
 
-/* 全栈创新品牌主题 ------------------------------------------------------- */
+/* Octura 紫橙视觉主题 --------------------------------------------------- */
 :root {
   --ink: #251442;
   --muted: #726784;
@@ -267,9 +267,7 @@ a { color: inherit; text-decoration: none; }
 body { background: var(--canvas); }
 .sidebar {
   background-color: var(--nav);
-  background-image: url('/assets/fullstack/04-bg-dark-portal.png');
-  background-position: center;
-  background-size: cover;
+  background-image: none;
   border-right-color: #382165;
 }
 .brand { height: 42px; gap: 10px; margin-bottom: 30px; }
@@ -316,9 +314,7 @@ body { background: var(--canvas); }
   border: 1px solid #e4d8ee;
   border-radius: 16px;
   background-color: #fbf8ff;
-  background-image: url('/assets/fullstack/03-bg-data-track.png');
-  background-position: center bottom;
-  background-size: cover;
+  background-image: none;
   box-shadow: var(--shadow);
 }
 .hero::after { content: ""; position: absolute; inset: 0; background: rgba(255,255,255,.24); pointer-events: none; }
@@ -405,4 +401,93 @@ body { background: var(--canvas); }
   .hero-mascot { position: absolute; right: -30px; bottom: -18px; opacity: .22; width: 190px; height: 190px; }
   .hero-actions { position: relative; z-index: 2; flex-direction: row; }
   .brand-signature { max-width: 180px; line-height: 1.5; }
+}
+
+/* Octura 紫橙产品主题：保留色彩与材质，不使用外部品牌资产。 */
+.sidebar {
+  background-color: #1b0d3f;
+  background-image: none;
+}
+.brand { height: 42px; gap: 0; margin-bottom: 30px; }
+.brand-copy { gap: 2px; }
+.brand-copy small { color: #a996c9; font-size: 8px; font-weight: 600; letter-spacing: .08em; }
+.select-wrap { padding: 11px 12px; }
+.nav-item { padding-left: 13px; }
+.nav-item.active { background: #351c67; box-shadow: inset 3px 0 var(--brand-orange); }
+.build-label { color: #77638f; }
+
+.mobile-brand {
+  width: auto;
+  height: 30px;
+  padding: 0;
+  color: #30185c;
+  font-size: 14px;
+  font-weight: 750;
+  letter-spacing: -.03em;
+}
+
+.hero {
+  min-height: 182px;
+  grid-template-columns: minmax(0, 1fr) auto;
+  padding: 28px;
+  background-color: #fbf8ff;
+  background-image: none;
+  border-top: 3px solid var(--brand-orange);
+}
+.hero::after { display: none; }
+.hero-copy, .hero-actions { position: relative; z-index: 1; }
+.hero-meta {
+  margin-top: 17px;
+  color: #8b75a6;
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: .11em;
+}
+.hero-actions { flex-direction: row; align-items: center; }
+
+.metric-top { min-height: 20px; }
+.record {
+  display: block;
+  padding-left: 12px;
+  border-left: 2px solid #d8c9e5;
+}
+.record.conversation { border-left-color: #8f6abc; }
+.record.requirement { border-left-color: #6b3da0; }
+.record.decision { border-left-color: #f0a11d; }
+.record.code { border-left-color: #7650a8; }
+.record.test { border-left-color: #b18ad5; }
+.record.verification { border-left-color: #d88a18; }
+.record.release { border-left-color: #9a7db7; }
+
+.chain-row {
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid #f0e8f4;
+}
+.chain-row:last-child { border-bottom: 0; }
+.chain-name { color: #584766; }
+.chain-count { color: #8f7f9b; }
+.principle {
+  display: block;
+  padding: 12px 13px;
+  background: #f7f1fb;
+  border-color: #e9dcf2;
+}
+.capture-heading { padding-left: 15px; }
+.empty-state { background: #f8f5fb; }
+
+@media (max-width: 1050px) {
+  .hero { grid-template-columns: minmax(0,1fr) auto; }
+  .hero-actions { grid-column: auto; }
+}
+
+@media (max-width: 720px) {
+  .hero { grid-template-columns: 1fr; }
+  .hero-actions { margin-top: 20px; }
+  .mobile-brand { display: block; }
+}
+
+@media (max-width: 430px) {
+  .record { padding-left: 10px; }
 }

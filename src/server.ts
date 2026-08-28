@@ -194,7 +194,6 @@ app.post("/api/demo/seed", async (context) => {
 
 app.get("/app.css", serveStatic({ path: "./public/app.css" }));
 app.get("/app.js", serveStatic({ path: "./public/app.js" }));
-app.get("/assets/*", serveStatic({ root: "./public" }));
 app.get("*", async (context) => context.html(await readFile(join(publicRoot, "index.html"), "utf8")));
 
 app.onError((error, context) => {
