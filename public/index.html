@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#07111f" />
+    <meta name="description" content="Octura — Evidence OS for AI software delivery" />
+    <title>Octura · Evidence workspace</title>
+    <link rel="stylesheet" href="/app.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar">
+        <a class="brand" href="/" aria-label="Octura home">
+          <span class="brand-mark" aria-hidden="true"><span></span></span>
+          <span class="brand-word">Octura</span>
+        </a>
+
+        <div class="workspace-picker">
+          <label for="project-select">Workspace</label>
+          <div class="select-wrap">
+            <span class="project-glyph">O</span>
+            <select id="project-select" aria-label="Choose project"></select>
+          </div>
+        </div>
+
+        <nav class="nav" aria-label="Primary navigation">
+          <p>Workspace</p>
+          <a class="nav-item active" href="#overview">
+            <span class="nav-icon">⌁</span><span>Overview</span>
+          </a>
+          <a class="nav-item" href="#records">
+            <span class="nav-icon">≋</span><span>Evidence records</span><span id="nav-count" class="nav-count">0</span>
+          </a>
+          <a class="nav-item muted" href="#" aria-disabled="true">
+            <span class="nav-icon">◇</span><span>Product versions</span><span class="soon">Soon</span>
+          </a>
+          <p>Connect</p>
+          <a class="nav-item" href="#capture">
+            <span class="nav-icon">›_</span><span>CLI capture</span>
+          </a>
+          <a class="nav-item muted" href="#" aria-disabled="true">
+            <span class="nav-icon">↗</span><span>Integrations</span><span class="soon">Soon</span>
+          </a>
+        </nav>
+
+        <div class="sidebar-bottom">
+          <div class="local-card">
+            <div class="local-status"><span class="pulse"></span>Local workspace</div>
+            <p>Your evidence stays in this Docker environment.</p>
+          </div>
+          <div class="build-label">Developer Preview · 0.1.0</div>
+        </div>
+      </aside>
+
+      <main class="main">
+        <header class="topbar">
+          <button class="mobile-brand" aria-label="Open navigation"><span class="brand-mark mini"><span></span></span></button>
+          <div class="breadcrumbs"><span>Octura</span><b>/</b><strong id="breadcrumb-project">Workspace</strong></div>
+          <div class="top-actions">
+            <span id="sync-status" class="sync-status"><span class="pulse"></span>Live</span>
+            <button id="refresh-button" class="icon-button" title="Refresh data" aria-label="Refresh data">↻</button>
+            <a class="docs-link" href="#capture">CLI guide <span>↓</span></a>
+          </div>
+        </header>
+
+        <div id="empty-state" class="empty-state hidden">
+          <div class="empty-mark"><span class="brand-mark large"><span></span></span></div>
+          <span class="eyebrow">A clean evidence workspace</span>
+          <h1>Give your AI work a reliable memory.</h1>
+          <p>Seed the launch demo or create a project from the Octura CLI to see the complete local evidence flow.</p>
+          <div class="empty-actions">
+            <button id="seed-button" class="primary-button">Seed launch demo</button>
+            <code>octura project create --slug my-project --name "My Project"</code>
+          </div>
+        </div>
+
+        <div id="dashboard" class="dashboard hidden">
+          <section id="overview" class="hero">
+            <div>
+              <div class="hero-kicker"><span class="kicker-dot"></span>Product truth workspace</div>
+              <h1 id="project-name">Octura Launch Demo</h1>
+              <p id="project-description">A live evidence trail for AI-assisted product delivery.</p>
+            </div>
+            <div class="hero-actions">
+              <button id="copy-capture" class="secondary-button"><span>›_</span> Copy capture command</button>
+              <a href="#records" class="primary-button">Review evidence <span>→</span></a>
+            </div>
+          </section>
+
+          <section class="metrics" aria-label="Project metrics">
+            <article class="metric-card">
+              <div class="metric-top"><span>Evidence records</span><span class="metric-icon blue">≋</span></div>
+              <strong id="metric-total">—</strong>
+              <p><span id="metric-sources">—</span> connected sources</p>
+            </article>
+            <article class="metric-card">
+              <div class="metric-top"><span>Human reviewed</span><span class="metric-icon green">✓</span></div>
+              <strong id="metric-reviewed">—</strong>
+              <p id="metric-reviewed-note">Trusted product facts</p>
+            </article>
+            <article class="metric-card">
+              <div class="metric-top"><span>Needs attention</span><span class="metric-icon amber">!</span></div>
+              <strong id="metric-captured">—</strong>
+              <p>Awaiting confirmation</p>
+            </article>
+            <article class="metric-card coverage-card">
+              <div class="metric-top"><span>Trace coverage</span><span class="metric-icon violet">◎</span></div>
+              <div class="coverage-value"><strong id="metric-coverage">—</strong><small>%</small></div>
+              <div class="mini-progress"><span id="metric-coverage-bar"></span></div>
+            </article>
+          </section>
+
+          <div class="content-grid">
+            <section id="records" class="panel timeline-panel">
+              <div class="panel-header">
+                <div>
+                  <span class="eyebrow">Evidence timeline</span>
+                  <h2>How the product became true</h2>
+                </div>
+                <div class="filter-group" role="group" aria-label="Filter evidence">
+                  <button class="filter active" data-filter="all">All</button>
+                  <button class="filter" data-filter="captured">Needs review</button>
+                  <button class="filter" data-filter="reviewed">Reviewed</button>
+                </div>
+              </div>
+              <div id="timeline" class="timeline" aria-live="polite">
+                <div class="loading-row"><span></span><span></span><span></span></div>
+              </div>
+            </section>
+
+            <aside class="inspector">
+              <section class="panel truth-panel">
+                <div class="panel-header compact">
+                  <div>
+                    <span class="eyebrow">Trace health</span>
+                    <h2>Evidence chain</h2>
+                  </div>
+                  <span id="health-badge" class="health-badge">Building</span>
+                </div>
+                <p class="panel-copy">A credible delivery connects intent, constraints, decisions, implementation and proof.</p>
+                <div id="evidence-chain" class="evidence-chain"></div>
+                <div class="principle">
+                  <span class="principle-mark">“</span>
+                  <p>AI can draft the story. Only reviewed evidence becomes product truth.</p>
+                </div>
+              </section>
+
+              <section id="capture" class="panel capture-panel">
+                <div class="capture-heading">
+                  <span class="terminal-dots"><i></i><i></i><i></i></span>
+                  <span>Capture from any agent</span>
+                </div>
+                <pre><code id="capture-command">octura record add \
+  --project octura-demo \
+  --kind decision \
+  --title "Keep the evidence" \
+  --body "Human review is required" \
+  --source codex</code></pre>
+                <div class="capture-footer">
+                  <span><span class="pulse"></span>Appears here automatically</span>
+                  <button id="copy-terminal" title="Copy command">Copy</button>
+                </div>
+              </section>
+            </aside>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+    <script type="module" src="/app.js"></script>
+  </body>
+</html>
