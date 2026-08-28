@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Octura 双语界面对照</title>
+    <style>
+      * { box-sizing: border-box; }
+      body { margin: 0; background: #160a32; color: #fff; font-family: "PingFang SC", Arial, sans-serif; }
+      main { width: 1029px; height: 747px; padding: 22px; display: grid; grid-template-rows: 48px 1fr; gap: 12px; }
+      header { display: flex; align-items: center; justify-content: space-between; }
+      h1 { margin: 0; font-size: 20px; }
+      header p { margin: 0; color: #b8a5d2; font-size: 11px; }
+      section { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; min-height: 0; }
+      article { position: relative; overflow: hidden; border: 1px solid #4c3171; border-radius: 14px; background: #f8f5fb; }
+      .label { position: absolute; z-index: 2; top: 12px; left: 12px; padding: 6px 9px; border-radius: 999px; background: rgba(35,13,74,.9); font-size: 10px; font-weight: 700; }
+      img { width: 100%; height: auto; object-fit: contain; object-position: top center; }
+      .note { position: absolute; left: 12px; right: 12px; bottom: 12px; padding: 9px 10px; border-radius: 9px; background: rgba(255,255,255,.95); color: #4e3b64; font-size: 10px; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <header><h1>Octura · 中文 / English</h1><p>相同视口、相同数据状态、相同视觉层级</p></header>
+      <section>
+        <article><span class="label">中文</span><img src="octura-bilingual-zh.png" alt="Octura 中文界面" /><div class="note">默认中文界面，语言选择保存在本地。</div></article>
+        <article><span class="label">English</span><img src="octura-bilingual-en.png" alt="Octura English interface" /><div class="note">System UI changes instantly; captured evidence keeps its original language.</div></article>
+      </section>
+    </main>
+  </body>
+</html>

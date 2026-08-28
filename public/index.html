@@ -12,42 +12,42 @@
     <div class="app-shell">
       <aside class="sidebar">
         <a class="brand" href="/" aria-label="Octura 首页">
-          <span class="brand-copy"><span class="brand-word">Octura</span><small>产品事实工作台</small></span>
+          <span class="brand-copy"><span class="brand-word">Octura</span><small data-i18n="brandSubtitle">产品事实工作台</small></span>
         </a>
 
         <div class="workspace-picker">
-          <label for="project-select">当前项目</label>
+          <label for="project-select" data-i18n="currentProject">当前项目</label>
           <div class="select-wrap">
             <select id="project-select" aria-label="选择项目"></select>
           </div>
         </div>
 
         <nav class="nav" aria-label="主要导航">
-          <p>事实工作台</p>
+          <p data-i18n="workspaceGroup">事实工作台</p>
           <a class="nav-item active" href="#overview">
-            <span>项目概览</span>
+            <span data-i18n="overview">项目概览</span>
           </a>
           <a class="nav-item" href="#records">
-            <span>证据记录</span><span id="nav-count" class="nav-count">0</span>
+            <span data-i18n="evidenceRecords">证据记录</span><span id="nav-count" class="nav-count">0</span>
           </a>
           <a class="nav-item muted" href="#" aria-disabled="true">
-            <span>产品版本</span><span class="soon">即将开放</span>
+            <span data-i18n="productVersions">产品版本</span><span class="soon" data-i18n="soon">即将开放</span>
           </a>
-          <p>连接与采集</p>
+          <p data-i18n="connectGroup">连接与采集</p>
           <a class="nav-item" href="#capture">
-            <span>CLI 采集</span>
+            <span data-i18n="cliCapture">CLI 采集</span>
           </a>
           <a class="nav-item muted" href="#" aria-disabled="true">
-            <span>外部集成</span><span class="soon">即将开放</span>
+            <span data-i18n="integrations">外部集成</span><span class="soon" data-i18n="soon">即将开放</span>
           </a>
         </nav>
 
         <div class="sidebar-bottom">
           <div class="local-card">
-            <div class="local-status"><span class="pulse"></span>本地安全运行</div>
-            <p>全部产品证据保存在当前 Docker 环境中。</p>
+            <div class="local-status"><span class="pulse"></span><span data-i18n="localSecure">本地安全运行</span></div>
+            <p data-i18n="localDescription">全部产品证据保存在当前 Docker 环境中。</p>
           </div>
-          <div class="build-label">Octura · 开发预览版 0.1.0</div>
+          <div class="build-label" data-i18n="buildLabel">Octura · 开发预览版 0.1.0</div>
         </div>
       </aside>
 
@@ -57,53 +57,57 @@
           <div class="breadcrumbs"><span>Octura</span><b>/</b><strong id="breadcrumb-project">事实工作台</strong></div>
           <div class="top-actions">
             <span id="sync-status" class="sync-status"><span class="pulse"></span>实时同步</span>
-            <button id="refresh-button" class="icon-button" title="刷新数据" aria-label="刷新数据">刷新</button>
-            <a class="docs-link" href="#capture">CLI 指南</a>
+            <div class="language-switch" role="group" aria-label="Language / 语言">
+              <button type="button" data-locale="zh" aria-pressed="true">中文</button>
+              <button type="button" data-locale="en" aria-pressed="false">EN</button>
+            </div>
+            <button id="refresh-button" class="icon-button" title="刷新数据" aria-label="刷新数据" data-i18n="refresh" data-i18n-title="refreshData" data-i18n-aria="refreshData">刷新</button>
+            <a class="docs-link" href="#capture" data-i18n="cliGuide">CLI 指南</a>
           </div>
         </header>
 
         <div id="empty-state" class="empty-state hidden">
-          <span class="eyebrow">AI 软件生产的可信事实层</span>
-          <h1>让每一次 AI 交付都有依据。</h1>
-          <p>写入演示数据，或从 Octura CLI 创建项目，体验完整的本地证据闭环。</p>
+          <span class="eyebrow" data-i18n="truthLayer">AI 软件生产的可信事实层</span>
+          <h1 data-i18n="emptyTitle">让每一次 AI 交付都有依据。</h1>
+          <p data-i18n="emptyDescription">写入演示数据，或从 Octura CLI 创建项目，体验完整的本地证据闭环。</p>
           <div class="empty-actions">
-            <button id="seed-button" class="primary-button">载入中文演示数据</button>
-            <code>octura project create --slug my-project --name "我的项目"</code>
+            <button id="seed-button" class="primary-button" data-i18n="seedDemo">载入中文演示数据</button>
+            <code id="empty-command">octura project create --slug my-project --name "我的项目"</code>
           </div>
         </div>
 
         <div id="dashboard" class="dashboard hidden">
           <section id="overview" class="hero">
             <div class="hero-copy">
-              <div class="hero-kicker"><span class="kicker-dot"></span>AI 软件交付的可信事实层</div>
+              <div class="hero-kicker"><span class="kicker-dot"></span><span data-i18n="heroKicker">AI 软件交付的可信事实层</span></div>
               <h1 id="project-name">Octura 中文演示</h1>
               <p id="project-description">一条可追溯、可验证、可承担的 AI 产品交付证据链。</p>
-              <div class="hero-meta">本地优先 · 开放采集 · 人工确认</div>
+              <div class="hero-meta" data-i18n="heroMeta">本地优先 · 开放采集 · 人工确认</div>
             </div>
             <div class="hero-actions">
-              <button id="copy-capture" class="secondary-button">复制采集命令</button>
-              <a href="#records" class="primary-button">审核证据</a>
+              <button id="copy-capture" class="secondary-button" data-i18n="copyCapture">复制采集命令</button>
+              <a href="#records" class="primary-button" data-i18n="reviewEvidence">审核证据</a>
             </div>
           </section>
 
           <section class="metrics" aria-label="项目指标">
             <article class="metric-card">
-              <div class="metric-top"><span>证据记录</span></div>
+              <div class="metric-top"><span data-i18n="evidenceRecords">证据记录</span></div>
               <strong id="metric-total">—</strong>
-              <p>来自 <span id="metric-sources">—</span> 个可信来源</p>
+              <p id="metric-sources-note">来自 <span id="metric-sources">—</span> 个可信来源</p>
             </article>
             <article class="metric-card">
-              <div class="metric-top"><span>人工已审核</span></div>
+              <div class="metric-top"><span data-i18n="humanReviewed">人工已审核</span></div>
               <strong id="metric-reviewed">—</strong>
               <p id="metric-reviewed-note">已成为可信产品事实</p>
             </article>
             <article class="metric-card">
-              <div class="metric-top"><span>等待确认</span></div>
+              <div class="metric-top"><span data-i18n="awaitingReview">等待确认</span></div>
               <strong id="metric-captured">—</strong>
-              <p>需要人的判断与确认</p>
+              <p data-i18n="awaitingNote">需要人的判断与确认</p>
             </article>
             <article class="metric-card coverage-card">
-              <div class="metric-top"><span>证据链覆盖率</span></div>
+              <div class="metric-top"><span data-i18n="coverage">证据链覆盖率</span></div>
               <div class="coverage-value"><strong id="metric-coverage">—</strong><small>%</small></div>
               <div class="mini-progress"><span id="metric-coverage-bar"></span></div>
             </article>
@@ -113,13 +117,13 @@
             <section id="records" class="panel timeline-panel">
               <div class="panel-header">
                 <div>
-                  <span class="eyebrow">证据时间线</span>
-                  <h2>产品事实是如何形成的</h2>
+                  <span class="eyebrow" data-i18n="timeline">证据时间线</span>
+                  <h2 data-i18n="timelineTitle">产品事实是如何形成的</h2>
                 </div>
                 <div class="filter-group" role="group" aria-label="筛选证据">
-                  <button class="filter active" data-filter="all">全部</button>
-                  <button class="filter" data-filter="captured">待审核</button>
-                  <button class="filter" data-filter="reviewed">已审核</button>
+                  <button class="filter active" data-filter="all" data-i18n="all">全部</button>
+                  <button class="filter" data-filter="captured" data-i18n="pending">待审核</button>
+                  <button class="filter" data-filter="reviewed" data-i18n="reviewed">已审核</button>
                 </div>
               </div>
               <div id="timeline" class="timeline" aria-live="polite">
@@ -131,21 +135,21 @@
               <section class="panel truth-panel">
                 <div class="panel-header compact">
                   <div>
-                    <span class="eyebrow">可信度检查</span>
-                    <h2>证据链完整性</h2>
+                    <span class="eyebrow" data-i18n="trustCheck">可信度检查</span>
+                    <h2 data-i18n="chainIntegrity">证据链完整性</h2>
                   </div>
                   <span id="health-badge" class="health-badge">正在构建</span>
                 </div>
-                <p class="panel-copy">可信交付必须连接用户意图、产品约束、关键决策、代码实现和验证结果。</p>
+                <p class="panel-copy" data-i18n="chainDescription">可信交付必须连接用户意图、产品约束、关键决策、代码实现和验证结果。</p>
                 <div id="evidence-chain" class="evidence-chain"></div>
                 <div class="principle">
-                  <p>AI 负责提案，人类负责事实与判断。只有经过审核的证据，才能成为产品事实。</p>
+                  <p data-i18n="principle">AI 负责提案，人类负责事实与判断。只有经过审核的证据，才能成为产品事实。</p>
                 </div>
               </section>
 
               <section id="capture" class="panel capture-panel">
                 <div class="capture-heading">
-                  <span>从任意 Agent 采集</span>
+                  <span data-i18n="captureFromAgent">从任意 Agent 采集</span>
                 </div>
                 <pre><code id="capture-command">octura record add \
   --project octura-demo \
@@ -154,8 +158,8 @@
   --body "事实必须经过人工确认" \
   --source codex</code></pre>
                 <div class="capture-footer">
-                  <span><span class="pulse"></span>写入后自动出现在时间线</span>
-                  <button id="copy-terminal" title="复制命令">复制</button>
+                  <span><span class="pulse"></span><span data-i18n="autoTimeline">写入后自动出现在时间线</span></span>
+                  <button id="copy-terminal" title="复制命令" data-i18n="copy" data-i18n-title="copyCommand">复制</button>
                 </div>
               </section>
             </aside>

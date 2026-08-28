@@ -425,6 +425,32 @@ body { background: var(--canvas); }
   font-weight: 750;
   letter-spacing: -.03em;
 }
+.language-switch {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px;
+  border: 1px solid #dfd4e8;
+  border-radius: 7px;
+  background: #f4eff8;
+}
+.language-switch button {
+  height: 25px;
+  min-width: 34px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  color: #8b7a9b;
+  font-size: 9px;
+  font-weight: 700;
+}
+.language-switch button:hover { color: #5b2d91; }
+.language-switch button.active {
+  background: #fff;
+  color: #5b2d91;
+  box-shadow: 0 1px 4px rgba(68,31,99,.12);
+}
 
 .hero {
   min-height: 182px;
@@ -486,6 +512,7 @@ body { background: var(--canvas); }
   .hero { grid-template-columns: 1fr; }
   .hero-actions { margin-top: 20px; }
   .mobile-brand { display: block; }
+  .language-switch button { min-width: 31px; padding: 0 6px; }
 }
 
 @media (max-width: 430px) {

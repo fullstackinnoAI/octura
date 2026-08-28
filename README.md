@@ -22,6 +22,8 @@ docker compose exec octura octura demo seed
 
 打开 [http://localhost:3000](http://localhost:3000)。
 
+Web 工作台右上角支持中文 / English 即时切换，并会记住选择。系统文案随语言切换，项目和证据内容保留采集时的原文。
+
 检查环境：
 
 ```bash
