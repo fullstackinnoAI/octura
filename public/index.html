@@ -1,111 +1,113 @@
 <!doctype html>
-<html lang="en">
+<html lang="zh-CN">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#07111f" />
-    <meta name="description" content="Octura — Evidence OS for AI software delivery" />
-    <title>Octura · Evidence workspace</title>
+    <meta name="theme-color" content="#251052" />
+    <meta name="description" content="Octura — AI 软件交付的可信事实工作台" />
+    <title>Octura · 产品事实工作台</title>
     <link rel="stylesheet" href="/app.css" />
   </head>
   <body>
     <div class="app-shell">
       <aside class="sidebar">
-        <a class="brand" href="/" aria-label="Octura home">
-          <span class="brand-mark" aria-hidden="true"><span></span></span>
-          <span class="brand-word">Octura</span>
+        <a class="brand" href="/" aria-label="Octura 首页">
+          <img class="brand-symbol" src="/assets/fullstack/23-icon-target.png" alt="" />
+          <span class="brand-copy"><span class="brand-word">Octura</span><small>全栈创新出品</small></span>
         </a>
 
         <div class="workspace-picker">
-          <label for="project-select">Workspace</label>
+          <label for="project-select">当前项目</label>
           <div class="select-wrap">
-            <span class="project-glyph">O</span>
-            <select id="project-select" aria-label="Choose project"></select>
+            <img class="project-glyph" src="/assets/fullstack/25-icon-compass.png" alt="" />
+            <select id="project-select" aria-label="选择项目"></select>
           </div>
         </div>
 
-        <nav class="nav" aria-label="Primary navigation">
-          <p>Workspace</p>
+        <nav class="nav" aria-label="主要导航">
+          <p>事实工作台</p>
           <a class="nav-item active" href="#overview">
-            <span class="nav-icon">⌁</span><span>Overview</span>
+            <img class="nav-icon" src="/assets/fullstack/27-data-gauge.png" alt="" /><span>项目概览</span>
           </a>
           <a class="nav-item" href="#records">
-            <span class="nav-icon">≋</span><span>Evidence records</span><span id="nav-count" class="nav-count">0</span>
+            <img class="nav-icon" src="/assets/fullstack/24-icon-database.png" alt="" /><span>证据记录</span><span id="nav-count" class="nav-count">0</span>
           </a>
           <a class="nav-item muted" href="#" aria-disabled="true">
-            <span class="nav-icon">◇</span><span>Product versions</span><span class="soon">Soon</span>
+            <img class="nav-icon" src="/assets/fullstack/22-icon-safety.png" alt="" /><span>产品版本</span><span class="soon">即将开放</span>
           </a>
-          <p>Connect</p>
+          <p>连接与采集</p>
           <a class="nav-item" href="#capture">
-            <span class="nav-icon">›_</span><span>CLI capture</span>
+            <img class="nav-icon" src="/assets/fullstack/23-icon-target.png" alt="" /><span>CLI 采集</span>
           </a>
           <a class="nav-item muted" href="#" aria-disabled="true">
-            <span class="nav-icon">↗</span><span>Integrations</span><span class="soon">Soon</span>
+            <img class="nav-icon" src="/assets/fullstack/21-icon-network.png" alt="" /><span>外部集成</span><span class="soon">即将开放</span>
           </a>
         </nav>
 
         <div class="sidebar-bottom">
           <div class="local-card">
-            <div class="local-status"><span class="pulse"></span>Local workspace</div>
-            <p>Your evidence stays in this Docker environment.</p>
+            <div class="local-status"><span class="pulse"></span>本地安全运行</div>
+            <p>全部产品证据保存在当前 Docker 环境中。</p>
           </div>
-          <div class="build-label">Developer Preview · 0.1.0</div>
+          <div class="build-label">全栈创新 · 开发预览版 0.1.0</div>
         </div>
       </aside>
 
       <main class="main">
         <header class="topbar">
-          <button class="mobile-brand" aria-label="Open navigation"><span class="brand-mark mini"><span></span></span></button>
-          <div class="breadcrumbs"><span>Octura</span><b>/</b><strong id="breadcrumb-project">Workspace</strong></div>
+          <button class="mobile-brand" aria-label="打开导航"><img src="/assets/fullstack/23-icon-target.png" alt="" /></button>
+          <div class="breadcrumbs"><span>Octura</span><b>/</b><strong id="breadcrumb-project">事实工作台</strong></div>
           <div class="top-actions">
-            <span id="sync-status" class="sync-status"><span class="pulse"></span>Live</span>
-            <button id="refresh-button" class="icon-button" title="Refresh data" aria-label="Refresh data">↻</button>
-            <a class="docs-link" href="#capture">CLI guide <span>↓</span></a>
+            <span id="sync-status" class="sync-status"><span class="pulse"></span>实时同步</span>
+            <button id="refresh-button" class="icon-button" title="刷新数据" aria-label="刷新数据">刷新</button>
+            <a class="docs-link" href="#capture">CLI 指南</a>
           </div>
         </header>
 
         <div id="empty-state" class="empty-state hidden">
-          <div class="empty-mark"><span class="brand-mark large"><span></span></span></div>
-          <span class="eyebrow">A clean evidence workspace</span>
-          <h1>Give your AI work a reliable memory.</h1>
-          <p>Seed the launch demo or create a project from the Octura CLI to see the complete local evidence flow.</p>
+          <div class="empty-mark"><img src="/assets/fullstack/13-ip-analysis.png" alt="全栈创新章鱼助手" /></div>
+          <span class="eyebrow">AI 软件生产的可信事实层</span>
+          <h1>让每一次 AI 交付都有依据。</h1>
+          <p>写入演示数据，或从 Octura CLI 创建项目，体验完整的本地证据闭环。</p>
           <div class="empty-actions">
-            <button id="seed-button" class="primary-button">Seed launch demo</button>
-            <code>octura project create --slug my-project --name "My Project"</code>
+            <button id="seed-button" class="primary-button">载入中文演示数据</button>
+            <code>octura project create --slug my-project --name "我的项目"</code>
           </div>
         </div>
 
         <div id="dashboard" class="dashboard hidden">
           <section id="overview" class="hero">
-            <div>
-              <div class="hero-kicker"><span class="kicker-dot"></span>Product truth workspace</div>
-              <h1 id="project-name">Octura Launch Demo</h1>
-              <p id="project-description">A live evidence trail for AI-assisted product delivery.</p>
+            <div class="hero-copy">
+              <div class="hero-kicker"><span class="kicker-dot"></span>AI 软件交付的可信事实层</div>
+              <h1 id="project-name">Octura 中文演示</h1>
+              <p id="project-description">一条可追溯、可验证、可承担的 AI 产品交付证据链。</p>
+              <div class="brand-signature">全栈创新 FULL STACK INNOVATION</div>
             </div>
+            <img class="hero-mascot" src="/assets/fullstack/13-ip-analysis.png" alt="全栈创新章鱼助手正在分析产品证据" />
             <div class="hero-actions">
-              <button id="copy-capture" class="secondary-button"><span>›_</span> Copy capture command</button>
-              <a href="#records" class="primary-button">Review evidence <span>→</span></a>
+              <button id="copy-capture" class="secondary-button">复制采集命令</button>
+              <a href="#records" class="primary-button">审核证据</a>
             </div>
           </section>
 
-          <section class="metrics" aria-label="Project metrics">
+          <section class="metrics" aria-label="项目指标">
             <article class="metric-card">
-              <div class="metric-top"><span>Evidence records</span><span class="metric-icon blue">≋</span></div>
+              <div class="metric-top"><span>证据记录</span><img class="metric-icon" src="/assets/fullstack/24-icon-database.png" alt="" /></div>
               <strong id="metric-total">—</strong>
-              <p><span id="metric-sources">—</span> connected sources</p>
+              <p>来自 <span id="metric-sources">—</span> 个可信来源</p>
             </article>
             <article class="metric-card">
-              <div class="metric-top"><span>Human reviewed</span><span class="metric-icon green">✓</span></div>
+              <div class="metric-top"><span>人工已审核</span><img class="metric-icon" src="/assets/fullstack/22-icon-safety.png" alt="" /></div>
               <strong id="metric-reviewed">—</strong>
-              <p id="metric-reviewed-note">Trusted product facts</p>
+              <p id="metric-reviewed-note">已成为可信产品事实</p>
             </article>
             <article class="metric-card">
-              <div class="metric-top"><span>Needs attention</span><span class="metric-icon amber">!</span></div>
+              <div class="metric-top"><span>等待确认</span><img class="metric-icon" src="/assets/fullstack/26-icon-warning.png" alt="" /></div>
               <strong id="metric-captured">—</strong>
-              <p>Awaiting confirmation</p>
+              <p>需要人的判断与确认</p>
             </article>
             <article class="metric-card coverage-card">
-              <div class="metric-top"><span>Trace coverage</span><span class="metric-icon violet">◎</span></div>
+              <div class="metric-top"><span>证据链覆盖率</span><img class="metric-icon" src="/assets/fullstack/27-data-gauge.png" alt="" /></div>
               <div class="coverage-value"><strong id="metric-coverage">—</strong><small>%</small></div>
               <div class="mini-progress"><span id="metric-coverage-bar"></span></div>
             </article>
@@ -115,13 +117,13 @@
             <section id="records" class="panel timeline-panel">
               <div class="panel-header">
                 <div>
-                  <span class="eyebrow">Evidence timeline</span>
-                  <h2>How the product became true</h2>
+                  <span class="eyebrow">证据时间线</span>
+                  <h2>产品事实是如何形成的</h2>
                 </div>
-                <div class="filter-group" role="group" aria-label="Filter evidence">
-                  <button class="filter active" data-filter="all">All</button>
-                  <button class="filter" data-filter="captured">Needs review</button>
-                  <button class="filter" data-filter="reviewed">Reviewed</button>
+                <div class="filter-group" role="group" aria-label="筛选证据">
+                  <button class="filter active" data-filter="all">全部</button>
+                  <button class="filter" data-filter="captured">待审核</button>
+                  <button class="filter" data-filter="reviewed">已审核</button>
                 </div>
               </div>
               <div id="timeline" class="timeline" aria-live="polite">
@@ -133,33 +135,33 @@
               <section class="panel truth-panel">
                 <div class="panel-header compact">
                   <div>
-                    <span class="eyebrow">Trace health</span>
-                    <h2>Evidence chain</h2>
+                    <span class="eyebrow">可信度检查</span>
+                    <h2>证据链完整性</h2>
                   </div>
-                  <span id="health-badge" class="health-badge">Building</span>
+                  <span id="health-badge" class="health-badge">正在构建</span>
                 </div>
-                <p class="panel-copy">A credible delivery connects intent, constraints, decisions, implementation and proof.</p>
+                <p class="panel-copy">可信交付必须连接用户意图、产品约束、关键决策、代码实现和验证结果。</p>
                 <div id="evidence-chain" class="evidence-chain"></div>
                 <div class="principle">
-                  <span class="principle-mark">“</span>
-                  <p>AI can draft the story. Only reviewed evidence becomes product truth.</p>
+                  <img src="/assets/fullstack/22-icon-safety.png" alt="" />
+                  <p>AI 负责提案，人类负责事实与判断。只有经过审核的证据，才能成为产品事实。</p>
                 </div>
               </section>
 
               <section id="capture" class="panel capture-panel">
                 <div class="capture-heading">
-                  <span class="terminal-dots"><i></i><i></i><i></i></span>
-                  <span>Capture from any agent</span>
+                  <img src="/assets/fullstack/23-icon-target.png" alt="" />
+                  <span>从任意 Agent 采集</span>
                 </div>
                 <pre><code id="capture-command">octura record add \
   --project octura-demo \
   --kind decision \
-  --title "Keep the evidence" \
-  --body "Human review is required" \
+  --title "保留产品证据" \
+  --body "事实必须经过人工确认" \
   --source codex</code></pre>
                 <div class="capture-footer">
-                  <span><span class="pulse"></span>Appears here automatically</span>
-                  <button id="copy-terminal" title="Copy command">Copy</button>
+                  <span><span class="pulse"></span>写入后自动出现在时间线</span>
+                  <button id="copy-terminal" title="复制命令">复制</button>
                 </div>
               </section>
             </aside>

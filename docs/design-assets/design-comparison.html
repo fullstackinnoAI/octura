@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Octura 品牌设计对照</title>
+    <style>
+      * { box-sizing: border-box; }
+      body { margin: 0; background: #160a32; color: #fff; font-family: "PingFang SC", "Microsoft YaHei", sans-serif; }
+      main { width: 1280px; height: 720px; padding: 24px; display: grid; grid-template-rows: 54px 1fr; gap: 14px; }
+      header { display: flex; justify-content: space-between; align-items: center; }
+      h1 { margin: 0; font-size: 22px; letter-spacing: -.02em; }
+      header p { margin: 0; color: #b8a5d2; font-size: 12px; }
+      section { display: grid; grid-template-columns: 43% 57%; gap: 16px; min-height: 0; }
+      article { min-width: 0; overflow: hidden; border: 1px solid #4c3171; border-radius: 16px; background: #f7f3fa; position: relative; }
+      .label { position: absolute; z-index: 2; top: 14px; left: 14px; padding: 7px 10px; border-radius: 999px; background: rgba(35,13,74,.88); color: #fff; font-size: 11px; font-weight: 700; }
+      .source img { width: 100%; height: 100%; object-fit: cover; object-position: center top; }
+      .result { display: grid; place-items: start center; background: #f8f5fb; }
+      .result img { width: 100%; height: auto; object-fit: contain; object-position: top center; }
+      .swatches { position: absolute; z-index: 2; left: 14px; bottom: 14px; display: flex; gap: 7px; padding: 8px; border-radius: 10px; background: rgba(255,255,255,.92); }
+      .swatches i { width: 20px; height: 20px; border-radius: 6px; }
+      .swatches i:nth-child(1) { background: #251052; }
+      .swatches i:nth-child(2) { background: #5b2d91; }
+      .swatches i:nth-child(3) { background: #b895e8; }
+      .swatches i:nth-child(4) { background: #f6a719; }
+      .swatches i:nth-child(5) { background: #f8f5fb; border: 1px solid #ddd2e8; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <header>
+        <h1>Octura 中文品牌版 · 视觉对照</h1>
+        <p>全栈创新品牌素材 → 产品事实工作台</p>
+      </header>
+      <section>
+        <article class="source">
+          <span class="label">视觉基准：全栈创新品牌系统</span>
+          <img src="fullstack-innovation-brand-overview.png" alt="全栈创新品牌素材总览" />
+          <div class="swatches"><i></i><i></i><i></i><i></i><i></i></div>
+        </article>
+        <article class="result">
+          <span class="label">实现结果：Octura · 1280 × 720</span>
+          <img src="octura-fullstack-cn-viewport.png" alt="Octura 中文品牌版工作台" />
+        </article>
+      </section>
+    </main>
+  </body>
+</html>

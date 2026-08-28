@@ -48,17 +48,17 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
       headers: { "Content-Type": "application/json", ...(init?.headers ?? {}) },
     });
   } catch {
-    throw new Error(`Cannot reach Octura at ${apiUrl}. Start it with: docker compose up -d`);
+    throw new Error(`无法连接 ${apiUrl} 上的 Octura。请先运行：docker compose up -d`);
   }
 
   const payload = (await response.json()) as ApiEnvelope<T> & { error?: { message?: string } };
-  if (!response.ok) throw new Error(payload.error?.message ?? `Request failed with HTTP ${response.status}`);
+  if (!response.ok) throw new Error(payload.error?.message ?? `请求失败，HTTP 状态码 ${response.status}`);
   return payload.data;
 }
 
 function required(name: keyof typeof values): string {
   const value = values[name];
-  if (typeof value !== "string" || !value) throw new Error(`Missing required option --${String(name)}`);
+  if (typeof value !== "string" || !value) throw new Error(`缺少必填选项 --${String(name)}`);
   return value;
 }
 
@@ -72,23 +72,23 @@ function output(value: unknown, human: () => void) {
 }
 
 function help() {
-  console.log(`${bold("Octura CLI")} · evidence for AI software delivery
+  console.log(`${bold("Octura CLI")} · AI 软件交付的产品证据工作台
 
-${bold("Start")}
+${bold("开始")}
   octura doctor
   octura demo seed
 
-${bold("Projects")}
-  octura project create --slug octura-demo --name "Octura Demo"
+${bold("项目")}
+  octura project create --slug octura-demo --name "Octura 中文演示"
   octura project list
 
-${bold("Records")}
-  octura record add --project octura-demo --kind decision --title "Keep evidence" --body "Human review is required" --source human
+${bold("证据记录")}
+  octura record add --project octura-demo --kind decision --title "保留交付证据" --body "关键事实需要人工确认" --source human
   octura record list --project octura-demo
-  octura record review --project octura-demo --id <record-id> --note "Confirmed"
+  octura record review --project octura-demo --id <record-id> --note "已确认"
 
-Kinds: ${recordKinds.join(", ")}
-Sources: ${recordSources.join(", ")}
+记录类型: ${recordKinds.join(", ")}
+证据来源: ${recordSources.join(", ")}
 API: ${apiUrl}`);
 }
 
@@ -98,13 +98,13 @@ async function main() {
 
   if (domain === "doctor") {
     const health = await fetch(`${apiUrl}/health`).then(async (response) => {
-      if (!response.ok) throw new Error(`Health check failed with HTTP ${response.status}`);
+      if (!response.ok) throw new Error(`健康检查失败，HTTP 状态码 ${response.status}`);
       return response.json() as Promise<{ status: string; version: string; database: string }>;
     });
     return output(health, () => {
-      console.log(`${green("●")} Octura ${health.version} is healthy`);
+      console.log(`${green("●")} Octura ${health.version} 运行正常`);
       console.log(`  API       ${apiUrl}`);
-      console.log(`  Database  ${health.database}`);
+      console.log(`  数据库    ${health.database}`);
     });
   }
 
@@ -114,8 +114,8 @@ async function main() {
       { method: "POST", body: JSON.stringify({ slug: projectSlug(), name: values.name }) },
     );
     return output(result, () => {
-      console.log(`${green("✓")} Seeded ${bold(result.project.name)} with ${result.records.length} evidence records`);
-      console.log(`  Open ${cyan(`${apiUrl}${result.dashboardUrl}`)}`);
+      console.log(`${green("✓")} 已为 ${bold(result.project.name)} 生成 ${result.records.length} 条证据记录`);
+      console.log(`  打开 ${cyan(`${apiUrl}${result.dashboardUrl}`)}`);
     });
   }
 
@@ -125,13 +125,13 @@ async function main() {
       method: "POST",
       body: JSON.stringify({ slug, name: values.name ?? slug, description: values.description ?? "" }),
     });
-    return output(project, () => console.log(`${green("✓")} Project ${bold(project.name)} (${project.slug}) is ready`));
+    return output(project, () => console.log(`${green("✓")} 项目 ${bold(project.name)}（${project.slug}）已就绪`));
   }
 
   if (domain === "project" && action === "list") {
     const projects = await request<Array<{ slug: string; name: string; description: string }>>("/api/projects");
     return output(projects, () => {
-      if (!projects.length) return console.log("No projects yet. Run: octura demo seed");
+      if (!projects.length) return console.log("暂无项目。请运行：octura demo seed");
       for (const project of projects) console.log(`${cyan(project.slug.padEnd(20))} ${bold(project.name)}  ${project.description}`);
     });
   }
@@ -139,9 +139,9 @@ async function main() {
   if (domain === "record" && action === "add") {
     const body = values["body-file"] ? await readFile(values["body-file"] as string, "utf8") : required("body");
     const kind = required("kind");
-    if (!recordKinds.includes(kind as (typeof recordKinds)[number])) throw new Error(`Invalid --kind. Use: ${recordKinds.join(", ")}`);
+    if (!recordKinds.includes(kind as (typeof recordKinds)[number])) throw new Error(`--kind 无效，可选值：${recordKinds.join(", ")}`);
     const source = (values.source as string | undefined) ?? "human";
-    if (!recordSources.includes(source as (typeof recordSources)[number])) throw new Error(`Invalid --source. Use: ${recordSources.join(", ")}`);
+    if (!recordSources.includes(source as (typeof recordSources)[number])) throw new Error(`--source 无效，可选值：${recordSources.join(", ")}`);
 
     const metadata = values.meta ? JSON.parse(values.meta as string) : {};
     const record = await request<{
@@ -165,10 +165,10 @@ async function main() {
       }),
     });
     return output(record, () => {
-      console.log(`${green("✓")} Captured ${cyan(formatKind(record.kind))}: ${bold(record.title)}`);
+      console.log(`${green("✓")} 已采集 ${cyan(formatKind(record.kind))}：${bold(record.title)}`);
       console.log(`  ID      ${record.id}`);
-      console.log(`  Source  ${record.source}`);
-      console.log(`  Status  ${amber(record.status)}`);
+      console.log(`  来源    ${record.source}`);
+      console.log(`  状态    ${amber(record.status)}`);
     });
   }
 
@@ -180,9 +180,9 @@ async function main() {
       `/api/projects/${projectSlug()}/records?${query}`,
     );
     return output(records, () => {
-      if (!records.length) return console.log("No records match this query.");
+      if (!records.length) return console.log("没有符合当前查询条件的记录。");
       for (const record of records) {
-        const state = record.status === "reviewed" ? green("reviewed") : amber("captured");
+        const state = record.status === "reviewed" ? green("已审核") : amber("已采集");
         console.log(`${record.id.slice(0, 8)}  ${cyan(record.kind.padEnd(13))} ${state.padEnd(color ? 19 : 10)}  ${record.title}  ${paint(2, record.source)}`);
       }
     });
@@ -193,16 +193,16 @@ async function main() {
       `/api/projects/${projectSlug()}/records/${required("id")}/review`,
       {
         method: "POST",
-        body: JSON.stringify({ actor: values.actor ?? "local-user", note: values.note ?? "Confirmed from the CLI" }),
+        body: JSON.stringify({ actor: values.actor ?? "local-user", note: values.note ?? "已通过 CLI 确认" }),
       },
     );
-    return output(record, () => console.log(`${green("✓")} Reviewed ${bold(record.title)} (${record.id.slice(0, 8)})`));
+    return output(record, () => console.log(`${green("✓")} 已审核 ${bold(record.title)}（${record.id.slice(0, 8)}）`));
   }
 
-  throw new Error(`Unknown command: ${positionals.join(" ")}. Run octura --help`);
+  throw new Error(`未知命令：${positionals.join(" ")}。请运行 octura --help`);
 }
 
 main().catch((error: unknown) => {
-  console.error(`${paint(31, "Error:")} ${error instanceof Error ? error.message : String(error)}`);
+  console.error(`${paint(31, "错误：")} ${error instanceof Error ? error.message : String(error)}`);
   process.exitCode = 1;
 });

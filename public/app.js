@@ -7,14 +7,33 @@ const state = {
 
 const $ = (selector) => document.querySelector(selector);
 const $$ = (selector) => [...document.querySelectorAll(selector)];
-const kindMarks = {
-  conversation: "C",
-  requirement: "R",
-  decision: "D",
-  code: "</>",
-  test: "T",
-  verification: "V",
-  release: "↗",
+const kindIcons = {
+  conversation: "/assets/fullstack/21-icon-network.png",
+  requirement: "/assets/fullstack/23-icon-target.png",
+  decision: "/assets/fullstack/25-icon-compass.png",
+  code: "/assets/fullstack/24-icon-database.png",
+  test: "/assets/fullstack/22-icon-safety.png",
+  verification: "/assets/fullstack/27-data-gauge.png",
+  release: "/assets/fullstack/14-ip-success.png",
+};
+const kindNames = {
+  conversation: "对话记录",
+  requirement: "产品需求",
+  decision: "关键决策",
+  code: "代码变更",
+  test: "测试结果",
+  verification: "人工验证",
+  release: "发布事实",
+};
+const sourceNames = {
+  human: "人工",
+  codex: "Codex",
+  cursor: "Cursor",
+  claude: "Claude",
+  git: "Git",
+  ci: "CI",
+  api: "API",
+  other: "其他",
 };
 
 function escapeHtml(value = "") {
@@ -28,17 +47,31 @@ function escapeHtml(value = "") {
 
 function relativeTime(value) {
   const seconds = Math.max(1, Math.round((Date.now() - new Date(value).getTime()) / 1000));
-  if (seconds < 60) return "just now";
+  if (seconds < 60) return "刚刚";
   const minutes = Math.round(seconds / 60);
-  if (minutes < 60) return `${minutes}m ago`;
+  if (minutes < 60) return `${minutes} 分钟前`;
   const hours = Math.round(minutes / 60);
-  if (hours < 24) return `${hours}h ago`;
+  if (hours < 24) return `${hours} 小时前`;
   const days = Math.round(hours / 24);
-  return `${days}d ago`;
+  return `${days} 天前`;
 }
 
 function formatKind(kind) {
-  return kind.charAt(0).toUpperCase() + kind.slice(1);
+  return kindNames[kind] ?? kind;
+}
+
+function formatSource(source) {
+  return sourceNames[source] ?? source;
+}
+
+function formatTruth(truth) {
+  return truth === "derived" ? "派生内容" : "原始证据";
+}
+
+function formatVerdict(verdict) {
+  if (verdict === "passed") return "通过";
+  if (verdict === "failed") return "失败";
+  return verdict;
 }
 
 async function api(path, options) {
@@ -47,7 +80,7 @@ async function api(path, options) {
     headers: { "Content-Type": "application/json", ...(options?.headers ?? {}) },
   });
   const payload = await response.json();
-  if (!response.ok) throw new Error(payload.error?.message ?? `Request failed (${response.status})`);
+  if (!response.ok) throw new Error(payload.error?.message ?? `请求失败（${response.status}）`);
   return payload.data;
 }
 
@@ -62,7 +95,7 @@ function toast(message) {
 
 function setLive(loading) {
   state.loading = loading;
-  $("#sync-status").innerHTML = loading ? "Syncing…" : '<span class="pulse"></span>Live';
+  $("#sync-status").innerHTML = loading ? "同步中…" : '<span class="pulse"></span>实时同步';
   $("#refresh-button").disabled = loading;
 }
 
@@ -98,7 +131,7 @@ async function loadDashboard(slug, quiet = false) {
     history.replaceState({}, "", url);
     localStorage.setItem("octura.project", slug);
     if (quiet && previousTotal !== undefined && state.dashboard.summary.total > previousTotal) {
-      toast("New evidence captured");
+      toast("已采集新的产品证据");
     }
   } catch (error) {
     if (!quiet) toast(error.message);
@@ -110,19 +143,19 @@ async function loadDashboard(slug, quiet = false) {
 function renderDashboard() {
   const { project, summary } = state.dashboard;
   $("#project-name").textContent = project.name;
-  $("#project-description").textContent = project.description || "An auditable trail for AI-assisted delivery.";
+  $("#project-description").textContent = project.description || "一条可追溯、可验证的 AI 产品交付证据链。";
   $("#breadcrumb-project").textContent = project.name;
   $("#nav-count").textContent = summary.total;
   $("#metric-total").textContent = summary.total;
   $("#metric-sources").textContent = summary.sources;
   $("#metric-reviewed").textContent = summary.reviewed;
   $("#metric-captured").textContent = summary.captured;
-  $("#metric-reviewed-note").textContent = summary.total ? `${Math.round((summary.reviewed / summary.total) * 100)}% of all evidence` : "Trusted product facts";
+  $("#metric-reviewed-note").textContent = summary.total ? `${Math.round((summary.reviewed / summary.total) * 100)}% 的记录已成为可信事实` : "等待建立可信事实";
   $("#metric-coverage").textContent = summary.coverage;
   $("#metric-coverage-bar").style.width = `${summary.coverage}%`;
-  $("#health-badge").textContent = summary.coverage === 100 ? "Complete" : "Building";
+  $("#health-badge").textContent = summary.coverage === 100 ? "完整" : "正在构建";
 
-  const command = `octura record add \\\n+  --project ${project.slug} \\\n+  --kind decision \\\n+  --title "Keep the evidence" \\\n+  --body "Human review is required" \\\n+  --source codex`;
+  const command = `octura record add \\\n  --project ${project.slug} \\\n  --kind decision \\\n  --title "保留交付证据" \\\n  --body "关键事实需要人工确认" \\\n  --source codex`;
   $("#capture-command").textContent = command;
 
   renderEvidenceChain();
@@ -134,10 +167,11 @@ function renderEvidenceChain() {
   $("#evidence-chain").innerHTML = state.dashboard.summary.requiredKinds
     .map((kind) => {
       const count = counts[kind] ?? 0;
+      const stateIcon = count ? "/assets/fullstack/22-icon-safety.png" : "/assets/fullstack/26-icon-warning.png";
       return `<div class="chain-row ${count ? "present" : ""}">
-        <span class="chain-state">${count ? "✓" : "·"}</span>
-        <span class="chain-name">${escapeHtml(kind)}</span>
-        <span class="chain-count">${count ? `${count} record${count > 1 ? "s" : ""}` : "missing"}</span>
+        <span class="chain-state"><img src="${stateIcon}" alt="" /></span>
+        <span class="chain-name">${escapeHtml(formatKind(kind))}</span>
+        <span class="chain-count">${count ? `${count} 条记录` : "缺失"}</span>
       </div>`;
     })
     .join("");
@@ -146,17 +180,17 @@ function renderEvidenceChain() {
 function renderTimeline() {
   const records = state.dashboard.records.filter((record) => state.filter === "all" || record.status === state.filter);
   if (!records.length) {
-    $("#timeline").innerHTML = '<div class="empty-filter">No evidence matches this filter.</div>';
+    $("#timeline").innerHTML = '<div class="empty-filter">没有符合当前筛选条件的证据。</div>';
     return;
   }
 
   $("#timeline").innerHTML = records
     .map((record) => {
       const metadataVerdict = record.metadata?.verdict
-        ? `<span class="badge reviewed">${escapeHtml(record.metadata.verdict)}</span>`
+        ? `<span class="badge reviewed">${escapeHtml(formatVerdict(record.metadata.verdict))}</span>`
         : "";
       return `<article class="record" data-id="${record.id}">
-        <div class="record-icon ${escapeHtml(record.kind)}">${kindMarks[record.kind] ?? "·"}</div>
+        <div class="record-icon ${escapeHtml(record.kind)}"><img src="${kindIcons[record.kind] ?? kindIcons.conversation}" alt="" /></div>
         <div class="record-main">
           <div class="record-head">
             <div>
@@ -167,12 +201,12 @@ function renderTimeline() {
           </div>
           <p class="record-body">${escapeHtml(record.body)}</p>
           <div class="record-meta">
-            <span class="badge source">${escapeHtml(record.source)}</span>
-            <span class="badge ${record.status}">${record.status === "reviewed" ? "✓ Human reviewed" : "● Needs review"}</span>
-            <span class="badge truth">${escapeHtml(record.truth)}</span>
+            <span class="badge source">${escapeHtml(formatSource(record.source))}</span>
+            <span class="badge ${record.status}">${record.status === "reviewed" ? "人工已审核" : "等待审核"}</span>
+            <span class="badge truth">${escapeHtml(formatTruth(record.truth))}</span>
             ${metadataVerdict}
             ${record.externalRef ? `<span class="external-ref" title="${escapeHtml(record.externalRef)}">${escapeHtml(record.externalRef)}</span>` : ""}
-            ${record.status === "captured" ? `<button class="review-button" data-review="${record.id}">Review as fact</button>` : ""}
+            ${record.status === "captured" ? `<button class="review-button" data-review="${record.id}">确认为事实</button>` : ""}
           </div>
         </div>
       </article>`;
@@ -184,17 +218,17 @@ function renderTimeline() {
 
 async function reviewEvidence(button) {
   button.disabled = true;
-  button.textContent = "Reviewing…";
+  button.textContent = "正在确认…";
   try {
     await api(`/api/projects/${state.dashboard.project.slug}/records/${button.dataset.review}/review`, {
       method: "POST",
-      body: JSON.stringify({ actor: "demo-owner", note: "Confirmed in the Octura evidence workspace" }),
+      body: JSON.stringify({ actor: "demo-owner", note: "已在 Octura 证据工作台中确认" }),
     });
     await loadDashboard(state.dashboard.project.slug);
-    toast("Evidence accepted as product truth");
+    toast("证据已确认为产品事实");
   } catch (error) {
     button.disabled = false;
-    button.textContent = "Review as fact";
+    button.textContent = "确认为事实";
     toast(error.message);
   }
 }
@@ -202,22 +236,22 @@ async function reviewEvidence(button) {
 async function copyCapture() {
   const command = $("#capture-command").textContent;
   await navigator.clipboard.writeText(command);
-  toast("Capture command copied");
+  toast("采集命令已复制");
 }
 
 async function seedDemo() {
   const button = $("#seed-button");
   button.disabled = true;
-  button.textContent = "Seeding evidence…";
+  button.textContent = "正在生成演示数据…";
   try {
     const result = await api("/api/demo/seed", { method: "POST", body: JSON.stringify({}) });
     await loadProjects(result.project.slug);
-    toast("Launch demo is ready");
+    toast("中文演示数据已就绪");
   } catch (error) {
     toast(error.message);
   } finally {
     button.disabled = false;
-    button.textContent = "Seed launch demo";
+    button.textContent = "生成中文演示数据";
   }
 }
 
@@ -244,7 +278,7 @@ async function init() {
     await loadProjects(preferredSlug);
   } catch (error) {
     $("#empty-state").classList.remove("hidden");
-    $("#empty-state h1").textContent = "Octura is waiting for its database.";
+    $("#empty-state h1").textContent = "Octura 正在等待数据库连接。";
     $("#empty-state p").textContent = error.message;
   }
 

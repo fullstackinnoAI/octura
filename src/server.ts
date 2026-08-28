@@ -43,13 +43,13 @@ app.post("/api/projects", async (context) => {
 
 app.get("/api/projects/:slug", async (context) => {
   const project = await getProject(context.req.param("slug"));
-  if (!project) return context.json({ error: { code: "project_not_found", message: "Project not found" } }, 404);
+  if (!project) return context.json({ error: { code: "project_not_found", message: "未找到项目" } }, 404);
   return context.json({ schemaVersion: "octura.api.v1", data: project });
 });
 
 app.get("/api/projects/:slug/dashboard", async (context) => {
   const project = await getProject(context.req.param("slug"));
-  if (!project) return context.json({ error: { code: "project_not_found", message: "Project not found" } }, 404);
+  if (!project) return context.json({ error: { code: "project_not_found", message: "未找到项目" } }, 404);
 
   const [summary, records] = await Promise.all([
     getProjectSummary(project.id),
@@ -60,7 +60,7 @@ app.get("/api/projects/:slug/dashboard", async (context) => {
 
 app.get("/api/projects/:slug/records", async (context) => {
   const project = await getProject(context.req.param("slug"));
-  if (!project) return context.json({ error: { code: "project_not_found", message: "Project not found" } }, 404);
+  if (!project) return context.json({ error: { code: "project_not_found", message: "未找到项目" } }, 404);
 
   const filters = recordQuery.parse(context.req.query());
   const records = await listRecords(project.id, filters);
@@ -69,7 +69,7 @@ app.get("/api/projects/:slug/records", async (context) => {
 
 app.post("/api/projects/:slug/records", async (context) => {
   const project = await getProject(context.req.param("slug"));
-  if (!project) return context.json({ error: { code: "project_not_found", message: "Project not found" } }, 404);
+  if (!project) return context.json({ error: { code: "project_not_found", message: "未找到项目" } }, 404);
 
   const input = recordInput.parse(await context.req.json());
   const record = await createRecord(project.id, input);
@@ -78,17 +78,17 @@ app.post("/api/projects/:slug/records", async (context) => {
 
 app.post("/api/projects/:slug/records/:id/review", async (context) => {
   const project = await getProject(context.req.param("slug"));
-  if (!project) return context.json({ error: { code: "project_not_found", message: "Project not found" } }, 404);
+  if (!project) return context.json({ error: { code: "project_not_found", message: "未找到项目" } }, 404);
 
   const input = reviewInput.parse(await context.req.json().catch(() => ({})));
   const record = await reviewRecord(project.id, context.req.param("id"), input);
-  if (!record) return context.json({ error: { code: "record_not_found", message: "Record not found" } }, 404);
+  if (!record) return context.json({ error: { code: "record_not_found", message: "未找到证据记录" } }, 404);
   return context.json({ schemaVersion: "octura.api.v1", data: record });
 });
 
 const seedRequest = z.object({
   slug: z.string().default("octura-demo"),
-  name: z.string().default("Octura Launch Demo"),
+  name: z.string().default("Octura 中文演示"),
 });
 
 app.post("/api/demo/seed", async (context) => {
@@ -97,7 +97,7 @@ app.post("/api/demo/seed", async (context) => {
     projectInput.parse({
       slug: request.slug,
       name: request.name,
-      description: "A live evidence trail for AI-assisted product delivery.",
+      description: "一条可追溯、可验证、可承担的 AI 产品交付证据链。",
     }),
   );
 
@@ -105,8 +105,8 @@ app.post("/api/demo/seed", async (context) => {
   const demoRecords = [
     {
       kind: "conversation",
-      title: "Define a focused evidence product",
-      body: "The team asked for a minimum product that can capture AI work through a CLI and display trusted records locally.",
+      title: "定义聚焦的产品证据工作台",
+      body: "团队需要一个最低可用产品：通过 CLI 采集 AI 协作过程，并在本地工作台展示可信记录。",
       source: "codex",
       actor: "woo + codex",
       truth: "raw",
@@ -117,32 +117,32 @@ app.post("/api/demo/seed", async (context) => {
     },
     {
       kind: "requirement",
-      title: "Show an auditable AI delivery trail",
-      body: "A visitor must understand what was requested, what changed, where the evidence came from, and whether a human reviewed it.",
+      title: "呈现可审计的 AI 交付链路",
+      body: "访问者需要快速理解提出了什么需求、发生了什么变更、证据来自哪里，以及是否经过人工审核。",
       source: "human",
       actor: "woo",
       truth: "raw",
       idempotencyKey: "demo-requirement",
       occurredAt: new Date(now - 1000 * 60 * 58).toISOString(),
       reviewed: true,
-      metadata: { priority: "P0", acceptance: "CLI to PostgreSQL to Web in one local flow" },
+      metadata: { priority: "P0", acceptance: "CLI、PostgreSQL 与 Web 在同一条本地链路中闭环" },
     },
     {
       kind: "decision",
-      title: "Keep execution outside Octura",
-      body: "Octura records product truth and delivery evidence. Codex, Cursor, Claude Code and CI continue to execute the work.",
+      title: "Octura 聚焦记录事实，而不是替代执行工具",
+      body: "Octura 负责沉淀产品事实和交付证据；Codex、Cursor、Claude Code 与 CI 继续负责具体执行。",
       source: "human",
       actor: "woo",
       truth: "raw",
       idempotencyKey: "demo-decision",
       occurredAt: new Date(now - 1000 * 60 * 44).toISOString(),
       reviewed: true,
-      metadata: { principle: "AI can draft; humans confirm facts" },
+      metadata: { principle: "AI 可以起草，人类负责确认事实" },
     },
     {
       kind: "code",
-      title: "CLI capture path implemented",
-      body: "The Octura CLI now creates projects, captures evidence records, lists history and submits human reviews through a stable local API.",
+      title: "CLI 证据采集链路已经实现",
+      body: "Octura CLI 已能通过稳定的本地 API 创建项目、采集证据、查看历史，并提交人工审核。",
       source: "git",
       actor: "codex",
       truth: "raw",
@@ -154,8 +154,8 @@ app.post("/api/demo/seed", async (context) => {
     },
     {
       kind: "test",
-      title: "Docker smoke test passed",
-      body: "The local stack started, PostgreSQL became healthy, and the API accepted and returned evidence records.",
+      title: "Docker 冒烟测试通过",
+      body: "本地服务已成功启动，PostgreSQL 状态健康，API 可以正确写入并返回产品证据。",
       source: "ci",
       actor: "local-smoke-test",
       truth: "raw",
@@ -167,15 +167,15 @@ app.post("/api/demo/seed", async (context) => {
     },
     {
       kind: "verification",
-      title: "Launch story awaiting human sign-off",
-      body: "Review the dashboard, run the CLI capture command live, and confirm that the new record appears with its original source intact.",
+      title: "演示链路等待最终人工确认",
+      body: "检查工作台、现场运行 CLI 采集命令，并确认新记录连同原始来源一起出现在时间线中。",
       source: "human",
       actor: "demo-owner",
       truth: "derived",
       idempotencyKey: "demo-verification",
       occurredAt: new Date(now - 1000 * 60 * 4).toISOString(),
       reviewed: false,
-      metadata: { checklist: ["open dashboard", "capture record", "review evidence"] },
+      metadata: { checklist: ["打开工作台", "采集记录", "审核证据"] },
     },
   ] as const;
 
@@ -183,7 +183,7 @@ app.post("/api/demo/seed", async (context) => {
   for (const item of demoRecords) {
     const { reviewed, ...data } = item;
     const record = await createRecord(project.id, recordInput.parse(data));
-    records.push(reviewed ? await reviewRecord(project.id, record.id, { actor: "woo", note: "Accepted for the launch narrative" }) : record);
+    records.push(reviewed ? await reviewRecord(project.id, record.id, { actor: "woo", note: "已确认为发布演示中的可信事实" }) : record);
   }
 
   return context.json({
@@ -194,6 +194,7 @@ app.post("/api/demo/seed", async (context) => {
 
 app.get("/app.css", serveStatic({ path: "./public/app.css" }));
 app.get("/app.js", serveStatic({ path: "./public/app.js" }));
+app.get("/assets/*", serveStatic({ root: "./public" }));
 app.get("*", async (context) => context.html(await readFile(join(publicRoot, "index.html"), "utf8")));
 
 app.onError((error, context) => {
@@ -204,7 +205,7 @@ app.onError((error, context) => {
     );
   }
   console.error(error);
-  return context.json({ error: { code: "internal_error", message: "Octura could not complete the request" } }, 500);
+  return context.json({ error: { code: "internal_error", message: "Octura 暂时无法完成当前请求" } }, 500);
 });
 
 await migrate();
