@@ -91,7 +91,7 @@ export async function createRecord(projectId: string, input: RecordInput): Promi
 
 export async function listRecords(
   projectId: string,
-  filters: { status?: string; kind?: string; limit: number },
+  filters: { status?: string; kind?: string; source?: string; limit: number },
 ): Promise<RecordRow[]> {
   return sql<RecordRow[]>`
     SELECT ${recordColumns}
@@ -99,6 +99,7 @@ export async function listRecords(
     WHERE project_id = ${projectId}
       ${filters.status ? sql`AND status = ${filters.status}` : sql``}
       ${filters.kind ? sql`AND kind = ${filters.kind}` : sql``}
+      ${filters.source ? sql`AND source = ${filters.source}` : sql``}
     ORDER BY occurred_at DESC, created_at DESC
     LIMIT ${filters.limit}
   `;

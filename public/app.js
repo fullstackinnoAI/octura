@@ -92,7 +92,7 @@ const translations = {
     openNavAria: "打开导航",
     reviewNote: "已在 Octura 证据工作台中确认",
     kinds: { conversation: "对话记录", requirement: "产品需求", decision: "关键决策", code: "代码变更", test: "测试结果", verification: "人工验证", release: "发布事实" },
-    sources: { human: "人工", codex: "Codex", cursor: "Cursor", claude: "Claude", git: "Git", ci: "CI", api: "API", other: "其他" },
+    sources: { human: "人工", codex: "Codex", cursor: "Cursor", claude: "Claude", git: "Git", ci: "CI", api: "API", "spec-kit": "Spec Kit", other: "其他" },
   },
   en: {
     pageTitle: "Octura · Product truth workspace",
@@ -177,7 +177,7 @@ const translations = {
     openNavAria: "Open navigation",
     reviewNote: "Confirmed in the Octura evidence workspace",
     kinds: { conversation: "Conversation", requirement: "Requirement", decision: "Decision", code: "Code change", test: "Test result", verification: "Verification", release: "Release fact" },
-    sources: { human: "Human", codex: "Codex", cursor: "Cursor", claude: "Claude", git: "Git", ci: "CI", api: "API", other: "Other" },
+    sources: { human: "Human", codex: "Codex", cursor: "Cursor", claude: "Claude", git: "Git", ci: "CI", api: "API", "spec-kit": "Spec Kit", other: "Other" },
   },
 };
 
@@ -269,7 +269,7 @@ function applyLocale() {
   $(".mobile-brand")?.setAttribute("aria-label", t("openNavAria"));
   $(".metrics")?.setAttribute("aria-label", t("metricsAria"));
   $(".filter-group")?.setAttribute("aria-label", t("filterAria"));
-  $("#empty-command").textContent = `octura project create --slug my-project --name "${t("emptyCommandName")}"`;
+  $("#empty-command").textContent = `octura-project-create --slug my-project --name "${t("emptyCommandName")}"`;
 
   $$('[data-locale]').forEach((button) => {
     const active = button.dataset.locale === state.locale;
@@ -339,7 +339,7 @@ function renderDashboard() {
   $("#metric-coverage-bar").style.width = `${summary.coverage}%`;
   $("#health-badge").textContent = summary.coverage === 100 ? t("healthComplete") : t("healthBuilding");
 
-  const command = `octura record add \\\n  --project ${project.slug} \\\n  --kind decision \\\n  --title "${t("captureTitle")}" \\\n  --body "${t("captureBody")}" \\\n  --source codex`;
+  const command = `octura-record-add \\\n  --project ${project.slug} \\\n  --kind decision \\\n  --title "${t("captureTitle")}" \\\n  --body "${t("captureBody")}" \\\n  --source codex`;
   $("#capture-command").textContent = command;
 
   renderEvidenceChain();

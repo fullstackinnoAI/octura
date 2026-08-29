@@ -10,7 +10,7 @@ export const recordKinds = [
   "release",
 ] as const;
 
-export const recordSources = ["human", "codex", "cursor", "claude", "git", "ci", "api", "other"] as const;
+export const recordSources = ["human", "codex", "cursor", "claude", "git", "ci", "api", "spec-kit", "other"] as const;
 
 export const projectInput = z.object({
   slug: z
@@ -25,7 +25,7 @@ export const projectInput = z.object({
 export const recordInput = z.object({
   kind: z.enum(recordKinds),
   title: z.string().min(2).max(160),
-  body: z.string().min(1).max(20_000),
+  body: z.string().min(1).max(500_000),
   source: z.enum(recordSources).default("human"),
   actor: z.string().min(1).max(120).default("local-user"),
   externalRef: z.string().max(500).optional(),
@@ -38,6 +38,7 @@ export const recordInput = z.object({
 export const recordQuery = z.object({
   status: z.enum(["captured", "reviewed"]).optional(),
   kind: z.enum(recordKinds).optional(),
+  source: z.enum(recordSources).optional(),
   limit: z.coerce.number().int().min(1).max(200).default(100),
 });
 

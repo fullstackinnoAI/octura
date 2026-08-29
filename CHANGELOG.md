@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- Replaced the original `octura` subcommand entry point with standalone hyphenated commands such as `octura-doctor`, `octura-demo-seed`, and `octura-record-add`.
+- Added read-only Spec Kit artifact discovery and import with isolated `.octura/oct-imports/oct-spec-kit-index.json` state.
+
 ## 0.1.0 — Developer Preview
 
 - Added a local-first PostgreSQL evidence store.
