@@ -57,51 +57,49 @@ docker compose exec octura octura-doctor
 
 Web 工作台右上角支持中文 / English 即时切换，并会记住选择。系统文案随语言切换，项目和证据内容保留采集时的原文。
 
-## CLI 的工作方式
+## 新版 CLI 约定
+
+Octura 现在只提供单段式、以连字符连接的可执行命令：
+
+```text
+octura-doctor
+octura-demo-seed
+octura-project-create
+octura-project-list
+octura-record-add
+octura-record-list
+octura-record-review
+octura-spec-kit-import
+```
+
+旧的 `octura doctor`、`octura demo seed`、`octura record add` 等多段式写法已经删除，不再兼容。使用 Docker 时，只需在新命令前加 `docker compose exec octura`：
+
+```bash
+docker compose exec octura octura-record-list --project octura-demo
+```
+
+README 中直接使用 `octura-*` 的示例，表示这些入口已经安装或链接到当前 `PATH`。在源码仓库中开发时，可以用 pnpm 作为命令运行器：
+
+```bash
+pnpm octura-doctor
+OCTURA_API_URL=http://localhost:3000 pnpm octura-project-list --json
+```
+
+CLI 使用同一条事实确认流程：
 
 ```text
 创建项目 → 采集证据 → captured（待审核）→ 人工确认 → reviewed（产品事实）
 ```
 
-每条记录都保存：
+每条记录都保存类型、来源、执行者、原始或派生属性、外部引用与审核状态。AI 和自动化可以采集记录，但只有人工确认才能把记录变为 `reviewed`。
 
-- `kind`：这是需求、决策、代码还是测试；
-- `source`：证据来自人、Agent、Git、CI 或 Spec Kit；
-- `actor`：谁执行了采集；
-- `truth`：原始证据或派生判断；
-- `externalRef`：对应文件、提交、构建或外部记录；
-- `status`：仍待审核，还是已经成为产品事实。
+## 案例一：为 AI Checkout 建立证据链
 
-## 读取 Spec Kit 记录
-
-Octura 兼容 Spec Kit 的 idea assessment 与 delivery artifacts，并将 `.specify/`、`specs/` 视为只读来源。先预览将要导入的记录：
-
-```bash
-octura-spec-kit-import \
-  --root /path/to/spec-kit-project \
-  --project my-project \
-  --dry-run
-```
-
-确认后执行导入：
-
-```bash
-OCTURA_API_URL=http://localhost:3000 octura-spec-kit-import \
-  --root /path/to/spec-kit-project \
-  --project my-project
-```
-
-Octura 不会修改 `.specify/` 或 `specs/`。导入索引保存在 `.octura/oct-imports/oct-spec-kit-index.json`；同一文件内容重复导入具有幂等性，内容变化则产生新的证据修订。详细约定见 [Octura × Spec Kit 兼容设计](docs/spec-kit-compatibility.md)。
-
-只查看 Spec Kit 来源的记录：
-
-```bash
-octura-record-list --project my-project --source spec-kit
-```
-
-![CLI 写入后，证据自动出现在 Octura 时间线](docs/assets/octura-cli-capture.jpg)
+下面的案例记录一次“将支付重试改为异步队列”的完整交付过程。
 
 ### 1. 创建项目
+
+`octura-project-create` 使用同一 `slug` 重复执行时会更新项目，不会创建重复项目。
 
 ```bash
 docker compose exec octura octura-project-create \
@@ -110,15 +108,29 @@ docker compose exec octura octura-project-create \
   --description "AI 辅助改造结账流程的交付档案"
 ```
 
-查看已有项目：
+确认项目已经存在：
 
 ```bash
 docker compose exec octura octura-project-list
 ```
 
-### 2. 采集一条关键决策
+### 2. 记录需求与决策
 
-下面的案例记录了“为什么把支付重试交给队列处理”。它不是提交代码，而是保存这次变更的产品意图和来源。
+先保存产品需求：
+
+```bash
+docker compose exec octura octura-record-add \
+  --project checkout-ai \
+  --kind requirement \
+  --title "支付请求必须可以安全重试" \
+  --body "同一支付请求重复到达时不能重复扣款，并且失败重试不能阻塞结账请求。" \
+  --source human \
+  --actor "product-owner" \
+  --external-ref "docs/requirements/payment-retry.md" \
+  --idempotency-key "requirement-payment-retry-v1"
+```
+
+再保存关键方案决策：
 
 ```bash
 docker compose exec octura octura-record-add \
@@ -127,32 +139,26 @@ docker compose exec octura octura-record-add \
   --title "支付重试改为队列驱动" \
   --body "同步重试会放大支付网关故障；改为带幂等键的异步队列，最多重试三次。" \
   --source human \
-  --actor "product-owner" \
+  --actor "tech-lead" \
   --external-ref "docs/decisions/payment-retry.md" \
   --idempotency-key "decision-payment-retry-v1"
 ```
 
-CLI 会返回记录 ID、来源和当前状态。新记录默认是 `captured`，意味着“已经采集，但尚未由人确认为事实”。
+新记录默认是 `captured`。`--idempotency-key` 允许 Agent 或自动化安全重试同一次写入。
 
-`--idempotency-key` 让 Agent 或自动化可以安全重试同一个写入，不会产生重复记录。
-
-正文较长时，可以从文件读取：
+正文较长时可以改用 `--body-file`。文件路径必须在执行 CLI 的环境中可见；Docker 示例需要先复制文件：
 
 ```bash
 docker compose cp ./payment-retry-requirement.md octura:/tmp/payment-retry-requirement.md
 docker compose exec octura octura-record-add \
   --project checkout-ai \
   --kind requirement \
-  --title "支付请求必须可以安全重试" \
+  --title "支付重试详细验收标准" \
   --body-file /tmp/payment-retry-requirement.md \
   --source human
 ```
 
-> `--body-file` 的路径必须在执行 CLI 的容器或主机中可见，所以示例先用 `docker compose cp` 把文件复制进容器。
-
-### 3. 记录代码和测试证据
-
-代码证据保留实现位置：
+### 3. 记录实现与测试
 
 ```bash
 docker compose exec octura octura-record-add \
@@ -165,7 +171,7 @@ docker compose exec octura octura-record-add \
   --external-ref "git:main:src/payments/retry-worker.ts"
 ```
 
-测试证据可以携带结构化 metadata：
+测试证据可以通过 `--meta` 携带 JSON 元数据：
 
 ```bash
 docker compose exec octura octura-record-add \
@@ -179,7 +185,9 @@ docker compose exec octura octura-record-add \
   --meta '{"verdict":"passed","tests":18,"environment":"ci"}'
 ```
 
-### 4. 查询等待审核的证据
+### 4. 查询并人工确认
+
+列出所有等待审核的记录：
 
 ```bash
 docker compose exec octura octura-record-list \
@@ -187,29 +195,73 @@ docker compose exec octura octura-record-list \
   --status captured
 ```
 
-也可以按类型过滤：
+也可以同时按类型或来源过滤：
 
 ```bash
 docker compose exec octura octura-record-list \
   --project checkout-ai \
-  --kind test
+  --kind test \
+  --source ci
 ```
 
-### 5. 人工确认产品事实
-
-从上一步输出中取得记录 ID：
+从查询结果取得记录 ID 后进行人工确认：
 
 ```bash
-RECORD_ID="把上一步输出的记录 ID 粘贴到这里"
+RECORD_ID="把查询结果中的完整记录 ID 粘贴到这里"
 
 docker compose exec octura octura-record-review \
   --project checkout-ai \
   --id "$RECORD_ID" \
   --actor "release-owner" \
-  --note "已核对决策文档、实现和测试结果"
+  --note "已核对需求、实现位置和测试结果"
 ```
 
-审核后，记录状态会变为 `reviewed`。也可以在 Web 时间线中点击“确认为事实”。
+审核后状态变为 `reviewed`。也可以在 Web 时间线中点击“确认为事实”。
+
+![CLI 写入后，证据自动出现在 Octura 时间线](docs/assets/octura-cli-capture.jpg)
+
+## 案例二：读取已有 Spec Kit 项目
+
+Octura 兼容 Spec Kit 的 idea assessment 与 delivery artifacts，并把 `.specify/` 和 `specs/` 作为只读上游。Octura 自己的项目文件只写入 `.octura/`，导入索引使用带 `oct-` 前缀的路径：
+
+```text
+project-root/
+├── .specify/                              # Spec Kit 所有，Octura 只读
+├── specs/                                 # Spec Kit 所有，Octura 只读
+└── .octura/                               # Octura 所有
+    └── oct-imports/
+        └── oct-spec-kit-index.json
+```
+
+先预览发现结果。`--dry-run` 不写 API，也不创建本地索引：
+
+```bash
+octura-spec-kit-import \
+  --root /path/to/spec-kit-project \
+  --project checkout-ai \
+  --dry-run
+```
+
+确认后导入正在本机运行的 Octura：
+
+```bash
+OCTURA_API_URL=http://localhost:3000 octura-spec-kit-import \
+  --root /path/to/spec-kit-project \
+  --project checkout-ai \
+  --name "AI Checkout"
+```
+
+如果未提供 `--project`，命令会根据项目根目录名称生成 slug。重复导入相同内容会复用既有记录；源文件发生变化时会新增证据修订。
+
+只查询 Spec Kit 来源的记录：
+
+```bash
+octura-record-list \
+  --project checkout-ai \
+  --source spec-kit
+```
+
+Spec Kit 的 `go` 决定导入后仍是 `captured`，不会自动成为 Octura 产品事实。使用 `octura-record-review` 进行人工确认。完整的文件映射和安全边界见 [Octura × Spec Kit 兼容设计](docs/spec-kit-compatibility.md)。
 
 ## 给 Agent 和脚本使用
 
@@ -244,17 +296,26 @@ OCTURA_API_URL=http://localhost:3000 octura-doctor
 
 ## CLI 命令速查
 
-| 命令 | 用途 |
-| --- | --- |
-| `octura-doctor` | 检查 API 与 PostgreSQL 连接 |
-| `octura-demo-seed` | 生成通用演示项目 |
-| `octura-demo-seed --profile specloop-core` | 生成真实 SpecLoop Core 演示档案 |
-| `octura-project-create` | 创建或更新项目 |
-| `octura-project-list` | 列出项目 |
-| `octura-record-add` | 采集一条证据 |
-| `octura-record-list` | 按状态或类型查询证据 |
-| `octura-record-review` | 人工确认一条证据 |
-| `octura-spec-kit-import` | 只读发现并导入 Spec Kit 记录 |
+| 命令 | 主要参数 | 用途 |
+| --- | --- | --- |
+| `octura-doctor` | `[--json]` | 检查 API 与 PostgreSQL 连接 |
+| `octura-demo-seed` | `[--profile specloop-core] [--slug <slug>] [--name <name>] [--json]` | 生成通用或 SpecLoop Core 演示档案 |
+| `octura-project-create` | `--slug <slug> [--name <name>] [--description <text>] [--json]` | 创建项目；相同 slug 时更新项目 |
+| `octura-project-list` | `[--json]` | 列出全部项目 |
+| `octura-record-add` | `--project <slug> --kind <kind> --title <title> (--body <text> \| --body-file <path>)` | 采集一条待审核证据 |
+| `octura-record-list` | `--project <slug> [--status <status>] [--kind <kind>] [--source <source>] [--json]` | 查询和过滤证据记录 |
+| `octura-record-review` | `--project <slug> --id <record-id> [--actor <name>] [--note <text>] [--json]` | 人工确认一条证据 |
+| `octura-spec-kit-import` | `[--root <path>] [--project <slug>] [--name <name>] [--dry-run] [--json]` | 只读发现并导入 Spec Kit 记录 |
+
+`octura-record-add` 还支持 `--source`、`--actor`、`--external-ref`、`--truth`、`--meta` 与 `--idempotency-key`。`--body` 和 `--body-file` 二选一；未指定 `--source` 时默认为 `human`，未指定 `--actor` 时默认为 `local-user`。
+
+常用短参数：
+
+```text
+-s --slug        -n --name        -d --description
+-r --root        -p --project     -k --kind
+-t --title       -b --body        -h --help
+```
 
 记录类型：
 
@@ -274,16 +335,16 @@ OCTURA_API_URL=http://localhost:3000 octura-doctor
 human / codex / cursor / claude / git / ci / api / spec-kit / other
 ```
 
-查看完整的本机帮助：
+任意命令入口都可以查看帮助：
 
 ```bash
-docker compose exec octura octura-doctor --help
+docker compose exec octura octura-record-add --help
 ```
 
 ## 现场分享建议
 
 1. 先打开 [SpecLoop Core 演示项目](http://localhost:3000/?project=specloop-core)。
-2. 用 `record add` 现场写入一条 `decision` 记录。
+2. 用 `octura-record-add` 现场写入一条 `decision` 记录。
 3. 等待最多 6 秒，记录会自动出现在时间线并显示“等待审核”。
 4. 解释 raw evidence 与 reviewed fact 的区别。
 5. 在页面或 CLI 中完成人工确认。
@@ -329,7 +390,7 @@ docker compose up --build -d
 
 修改 `docker-compose.yml` 中的端口映射，例如改为 `3100:3000`，然后访问 `http://localhost:3100`。
 
-### 重复执行 demo seed 会不会产生重复数据
+### 重复执行 `octura-demo-seed` 会不会产生重复数据
 
 不会。演示记录使用固定 idempotency key，重复执行会复用同一条记录。
 
