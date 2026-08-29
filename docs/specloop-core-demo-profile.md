@@ -1,37 +1,37 @@
-# SpecLoop Core 演示档案
+# `specloop-core` 真实项目演示档案
 
-这个档案让 Octura 直接展示当前 `specloop-core` 工作区中的真实产品事实，而不是使用虚构的示例项目。
+这个档案把 SpecLoop Core 收敛为 Octura 1.0 的过程保存成一段完整 Session 和六条结构化成果，用于演示“详细记录与展示”，不再沿用旧版固定证据分类或覆盖率。
 
 ## 生成方式
 
 ```bash
-docker compose exec octura octura demo seed --profile specloop-core
+docker compose exec octura octura-demo-seed --profile specloop-core --json
 ```
 
-打开：<http://localhost:3000/?project=specloop-core>
+打开 <http://localhost:3000/?project=specloop-core>。命令可重复执行；相同幂等键和相同内容返回首次结果，不会重复写入。
 
-命令可重复执行；相同证据通过 idempotency key 去重。
+## 演示数据
 
-## 证据映射
+Session：`SpecLoop Core → Octura 1.0 产品收敛`
 
-| Octura 记录 | SpecLoop Core 来源 | 说明 |
-| --- | --- | --- |
-| 对话 | `README.md` | 产品边界从 Agent 执行台收敛为产品事实与生产记录系统 |
-| 需求 | `README.md` | 不可变修订、来源和人工确认状态 |
-| 决策 | `docs/cli-first-refactor.md` | CLI-first 与统一 `ProductCore.execute()` 入口 |
-| 代码 | `packages/product-core/src/service.ts` | 当前工作区中的统一命令内核实现 |
-| 测试 | 本地定向测试 | Product Core 3 项、CLI 9 项，共 12 项通过 |
-| 验证 | `design-qa.md` | 时间线、SPEC、控制室和工作台的历史设计 QA 证据 |
-| 发布 | `docs/cli-first-refactor.md` | 第一阶段垂直链路等待演示确认 |
+- 四条完整可见消息：user、assistant、tool、assistant；
+- 六条 Record：summary、requirement、decision、change、test、verification；
+- 前四条经过单独的 `confirm` 审核，后两条保留为待审核；
+- 来源覆盖 human、Codex Agent 和 CI；
+- 文件引用指向 1.0 产品 SPEC 或统一应用服务。
 
-## 本次验证边界
+| Record | 事实来源 | 初始状态 | 演示重点 |
+| --- | --- | --- | --- |
+| 确认 SpecLoop 重构为 Octura | Codex 派生 | reviewed | 产品边界收敛 |
+| 完整保存可见对话与成果记录 | 人工原始说明 | reviewed | Session 与 Record 双层记录 |
+| 采用批量与实时双轨采集 | Codex 派生 | reviewed | 原子 Capture 与顺序追加 |
+| 统一记录内核已经形成 | Codex 派生 | reviewed | CLI/API/MCP 共享规则 |
+| 记录契约与状态机验证通过 | CI 原始结果 | captured | 不能由采集接口直接确认 |
+| 1.0 工作台等待最终人工确认 | Codex 派生 | captured | 风险、下一步与审核声明 |
 
-2026-08-28 本地执行并通过：
+## 真实性边界
 
-```bash
-pnpm --filter @specloop/product-core test
-pnpm --filter @specloop/cli test
-```
-
-这里没有声称 `specloop-core` 全仓库构建、类型检查或全部测试已经通过。代码记录也明确标记为当前 working tree，而不是已发布提交。
-
+- 演示档案是为当前 1.0 实现生成的确定性种子，不声称已经迁移旧 SpecLoop 数据库。
+- `derived` 表示 Agent 根据 Session 形成的结构化成果；`raw` 表示直接保存的人工说明或 CI 验证摘要。
+- 演示确认事件使用本地调用者声明 `woo`，没有账号认证，Web 会明确展示这一限制。
+- `tool` 消息只保存简短验证摘要，不保存隐藏推理、密钥或大段原始终端日志。

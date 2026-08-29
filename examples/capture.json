@@ -1,0 +1,34 @@
+{
+  "schemaVersion": "octura.capture.v1",
+  "idempotencyKey": "checkout-payment-retry-capture-v1",
+  "session": {
+    "title": "支付重试队列改造",
+    "sourceType": "agent",
+    "sourceName": "codex",
+    "actorType": "agent",
+    "actorName": "codex",
+    "externalRefs": [{ "type": "issue", "value": "PAY-42" }],
+    "startedAt": "2026-08-29T07:30:00+08:00",
+    "endedAt": "2026-08-29T08:00:00+08:00",
+    "messages": [
+      { "role": "user", "content": "把支付重试从 HTTP 请求迁移到异步队列。", "actorName": "product-owner", "occurredAt": "2026-08-29T07:30:00+08:00" },
+      { "role": "assistant", "content": "将实现幂等消费、指数退避和三次失败后的死信处理。", "actorName": "codex", "occurredAt": "2026-08-29T07:35:00+08:00" },
+      { "role": "tool", "content": "验证摘要：支付重试集成测试 18 项通过。", "actorName": "local-test", "occurredAt": "2026-08-29T07:55:00+08:00" }
+    ]
+  },
+  "records": [
+    {
+      "kind": "change",
+      "title": "支付重试队列完成幂等消费与退避",
+      "outcomeStatus": "completed",
+      "intent": { "goal": "把同步重试迁移到异步队列", "constraints": ["不能重复扣款"], "acceptance": ["18 项集成测试通过"] },
+      "result": "支付请求不再同步等待重试；队列消费者通过幂等键去重。",
+      "changes": [{ "scope": "src/payments/retry-worker.ts", "description": "新增队列消费、指数退避和死信处理。" }],
+      "verification": [{ "name": "支付重试集成测试", "status": "passed", "details": "18 项通过" }],
+      "externalRefs": [{ "type": "file", "value": "src/payments/retry-worker.ts" }],
+      "provenance": { "truth": "derived", "sourceType": "agent", "sourceName": "codex", "actorType": "agent", "actorName": "codex" },
+      "occurredAt": "2026-08-29T08:00:00+08:00",
+      "idempotencyKey": "payment-retry-change-v1"
+    }
+  ]
+}

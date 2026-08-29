@@ -1,17 +1,35 @@
 {
   "name": "octura",
-  "version": "0.1.0",
+  "version": "1.0.0-rc.1",
   "private": true,
-  "description": "Evidence OS for AI software delivery",
+  "description": "Local-first recording workbench for AI software development",
   "type": "module",
   "bin": {
-    "octura": "./dist/cli.js"
+    "octura": "./dist/cli.js",
+    "octura-record-prompt": "./dist/octura-record-prompt.js",
+    "octura-project-create": "./dist/octura-project-create.js",
+    "octura-project-list": "./dist/octura-project-list.js",
+    "octura-project-show": "./dist/octura-project-show.js",
+    "octura-capture-add": "./dist/octura-capture-add.js",
+    "octura-session-start": "./dist/octura-session-start.js",
+    "octura-session-append": "./dist/octura-session-append.js",
+    "octura-session-close": "./dist/octura-session-close.js",
+    "octura-record-add": "./dist/octura-record-add.js",
+    "octura-record-list": "./dist/octura-record-list.js",
+    "octura-record-get": "./dist/octura-record-get.js",
+    "octura-record-review": "./dist/octura-record-review.js",
+    "octura-record-supersede": "./dist/octura-record-supersede.js",
+    "octura-mcp": "./dist/octura-mcp.js",
+    "octura-doctor": "./dist/octura-doctor.js",
+    "octura-demo-seed": "./dist/octura-demo-seed.js"
   },
   "scripts": {
     "dev": "tsx watch src/server.ts",
     "build": "tsc -p tsconfig.json",
     "start": "node dist/server.js",
     "cli": "tsx src/cli.ts",
+    "mcp": "tsx src/octura-mcp.ts",
+    "smoke:e2e": "node scripts/smoke.mjs",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run"
   },

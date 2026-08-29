@@ -1,21 +1,12 @@
 # Octura
 
-**AI 软件交付的产品事实与证据工作台。**
+**本地优先的 AI 软件开发记录工作台。**
 
-Evidence OS for AI software delivery.
+Octura 保存一次开发活动的完整可见对话、结构化成果、来源和人工审核声明，让团队能回答：为什么做、人与 Agent 分别做了什么、证据在哪里、哪些结论经过确认。
 
-Octura 把 AI 辅助开发中的对话、需求、决策、代码引用、测试和人工验证，保存为一条可查询、可审核、可追溯的产品事实链。
+Octura 只负责记录、查询、审核、修正和展示。它不执行代码，也不替代 Codex、Cursor、Claude Code、GitHub 或 CI。
 
-它不执行代码，也不替代 Codex、Cursor、Claude Code、GitHub 或 CI。Octura 专门回答四个问题：
-
-- 为什么要做这次变更？
-- AI 和人分别做了什么？
-- 证据来自哪里？
-- 哪些内容已经由人确认？
-
-![Octura 中的 SpecLoop Core 真实项目演示](docs/assets/octura-specloop-overview.jpg)
-
-## 3 分钟运行演示
+## 3 分钟运行
 
 需要 Docker Desktop 或兼容的 Docker Engine。
 
@@ -23,337 +14,216 @@ Octura 把 AI 辅助开发中的对话、需求、决策、代码引用、测试
 git clone https://github.com/fullstackinnoAI/octura.git
 cd octura
 docker compose up --build -d
-docker compose exec octura octura demo seed --profile specloop-core
+docker compose exec octura octura-demo-seed --profile specloop-core
 ```
 
-打开 [http://localhost:3000/?project=specloop-core](http://localhost:3000/?project=specloop-core)。
+打开 [http://localhost:3000/?project=specloop-core](http://localhost:3000/?project=specloop-core)。演示项目包含：
 
-`specloop-core` profile 会生成一套来自真实项目的演示档案：
+- 一段完整可见的真实重构 Session；
+- 总结、需求、决策、代码变更、测试和人工验证 Record；
+- captured 与 reviewed 两个信任层；
+- 可搜索时间线、Record 详情、原始 Session 和追加式审核历史。
 
-- 7 条产品证据；
-- 5 条已经人工确认，2 条等待确认；
-- 覆盖对话、需求、决策、代码和测试五个必要环节；
-- 证据链覆盖率为 100%。
+## 工作台预览
 
-不加 `--profile` 时会生成通用的 `octura-demo` 项目：
+项目概览只展示数据库中可直接计算的 Session、Record、待审核、已确认和来源数量；原始内容保持采集时语言，系统界面可切换中英文。
+
+![Octura 中文项目概览](docs/screenshots/octura-overview-zh.jpg)
+
+Record 详情保留任务意图、结果、变更、决策、验证、风险、外部引用、来源、审核历史与取代链。
+
+![Octura Record 结构化详情](docs/screenshots/octura-record-detail-zh.jpg)
+
+检查运行状态：
 
 ```bash
-docker compose exec octura octura demo seed
+docker compose exec octura octura-doctor --json
 ```
 
-检查服务和数据库：
-
-```bash
-docker compose exec octura octura doctor
-```
-
-预期输出：
+## Agent 的记录流程
 
 ```text
-● Octura 0.1.0 运行正常
-  API       http://localhost:3000
-  数据库    connected
+取得协议 → 生成结构化 Record → 保存可见对话与成果 → captured → 人工判断
 ```
 
-Web 工作台右上角支持中文 / English 即时切换，并会记住选择。系统文案随语言切换，项目和证据内容保留采集时的原文。
-
-## CLI 的工作方式
-
-```text
-创建项目 → 采集证据 → captured（待审核）→ 人工确认 → reviewed（产品事实）
-```
-
-每条记录都保存：
-
-- `kind`：这是需求、决策、代码还是测试；
-- `source`：证据来自人、Agent、Git 或 CI；
-- `actor`：谁执行了采集；
-- `truth`：原始证据或派生判断；
-- `externalRef`：对应文件、提交、构建或外部记录；
-- `status`：仍待审核，还是已经成为产品事实。
-
-![CLI 写入后，证据自动出现在 Octura 时间线](docs/assets/octura-cli-capture.jpg)
-
-### 1. 创建项目
+### 1. 读取内置提示词和 Schema
 
 ```bash
-docker compose exec octura octura project create \
+docker compose exec octura octura-record-prompt --json
+```
+
+返回内容包含：
+
+- `octura.recording-prompt.v1` 写作协议；
+- `octura.record.v1` Record JSON Schema；
+- `octura.capture.v1` 批量 Capture JSON Schema。
+
+Octura 不调用模型。Agent 在自己的上下文中按协议生成 Record。
+
+### 2. 创建项目
+
+```bash
+docker compose exec octura octura-project-create \
   --slug checkout-ai \
   --name "AI Checkout" \
-  --description "AI 辅助改造结账流程的交付档案"
+  --description "结账流程的 AI 开发活动档案"
 ```
 
-查看已有项目：
+### 3. 原子保存一次开发活动
+
+仓库提供了完整案例 [`examples/capture.json`](examples/capture.json)：
 
 ```bash
-docker compose exec octura octura project list
-```
-
-### 2. 采集一条关键决策
-
-下面的案例记录了“为什么把支付重试交给队列处理”。它不是提交代码，而是保存这次变更的产品意图和来源。
-
-```bash
-docker compose exec octura octura record add \
+docker compose cp examples/capture.json octura:/tmp/capture.json
+docker compose exec octura octura-capture-add \
   --project checkout-ai \
-  --kind decision \
-  --title "支付重试改为队列驱动" \
-  --body "同步重试会放大支付网关故障；改为带幂等键的异步队列，最多重试三次。" \
-  --source human \
-  --actor "product-owner" \
-  --external-ref "docs/decisions/payment-retry.md" \
-  --idempotency-key "decision-payment-retry-v1"
+  --file /tmp/capture.json
 ```
 
-CLI 会返回记录 ID、来源和当前状态。新记录默认是 `captured`，意味着“已经采集，但尚未由人确认为事实”。
+Session、Messages 和 Records 在一个数据库事务中写入。任一内容无效时整体回滚；相同幂等键和相同内容可以安全重试。
 
-`--idempotency-key` 让 Agent 或自动化可以安全重试同一个写入，不会产生重复记录。
-
-正文较长时，可以从文件读取：
+### 4. 查询和阅读
 
 ```bash
-docker compose cp ./payment-retry-requirement.md octura:/tmp/payment-retry-requirement.md
-docker compose exec octura octura record add \
-  --project checkout-ai \
-  --kind requirement \
-  --title "支付请求必须可以安全重试" \
-  --body-file /tmp/payment-retry-requirement.md \
-  --source human
-```
-
-> `--body-file` 的路径必须在执行 CLI 的容器或主机中可见，所以示例先用 `docker compose cp` 把文件复制进容器。
-
-### 3. 记录代码和测试证据
-
-代码证据保留实现位置：
-
-```bash
-docker compose exec octura octura record add \
-  --project checkout-ai \
-  --kind code \
-  --title "实现支付重试队列" \
-  --body "新增幂等消费和指数退避，支付请求不再在 HTTP 请求内同步重试。" \
-  --source git \
-  --actor "codex" \
-  --external-ref "git:main:src/payments/retry-worker.ts"
-```
-
-测试证据可以携带结构化 metadata：
-
-```bash
-docker compose exec octura octura record add \
-  --project checkout-ai \
-  --kind test \
-  --title "支付重试集成测试通过" \
-  --body "覆盖成功、超时、重复消息和第三次失败进入死信队列。" \
-  --source ci \
-  --actor "github-actions" \
-  --external-ref "https://github.com/example/checkout/actions/runs/123" \
-  --meta '{"verdict":"passed","tests":18,"environment":"ci"}'
-```
-
-### 4. 查询等待审核的证据
-
-```bash
-docker compose exec octura octura record list \
-  --project checkout-ai \
-  --status captured
-```
-
-也可以按类型过滤：
-
-```bash
-docker compose exec octura octura record list \
-  --project checkout-ai \
-  --kind test
-```
-
-### 5. 人工确认产品事实
-
-从上一步输出中取得记录 ID：
-
-```bash
-RECORD_ID="把上一步输出的记录 ID 粘贴到这里"
-
-docker compose exec octura octura record review \
-  --project checkout-ai \
-  --id "$RECORD_ID" \
-  --actor "release-owner" \
-  --note "已核对决策文档、实现和测试结果"
-```
-
-审核后，记录状态会变为 `reviewed`。也可以在 Web 时间线中点击“确认为事实”。
-
-## 给 Agent 和脚本使用
-
-所有 CLI 命令都支持 `--json`。输出是稳定的 JSON，适合 Codex、CI 或本地脚本继续处理。
-
-```bash
-docker compose exec octura octura record list \
+docker compose exec octura octura-record-list \
   --project checkout-ai \
   --status captured \
+  --q "支付" \
   --json
 ```
 
-使用 `jq` 取得第一条待审核记录：
+查看完整 Record、审核历史和 Session 关系：
 
 ```bash
-RECORD_ID=$(docker compose exec -T octura octura record list \
+docker compose exec octura octura-record-get \
   --project checkout-ai \
-  --status captured \
-  --json | jq -r '.[0].id')
-
-docker compose exec octura octura record review \
-  --project checkout-ai \
-  --id "$RECORD_ID" \
-  --actor "release-owner"
+  --id <record-id> \
+  --json
 ```
 
-如果 CLI 不在 Docker 容器中，使用 `OCTURA_API_URL` 指向 Octura API：
+### 5. 明确作出审核判断
 
 ```bash
-OCTURA_API_URL=http://localhost:3000 pnpm cli -- doctor
+docker compose exec octura octura-record-review \
+  --project checkout-ai \
+  --id <record-id> \
+  --action confirm \
+  --reviewer "release-owner" \
+  --note "已核对原始 Session、实现位置与测试结果" \
+  --idempotency-key "review-payment-retry-v1"
 ```
 
-## CLI 命令速查
+`confirm` 仅适用于 captured，`dismiss` 仅适用于 captured，`retract` 仅适用于 reviewed。审核事件追加保存，不会改写历史。
 
-| 命令 | 用途 |
-| --- | --- |
-| `octura doctor` | 检查 API 与 PostgreSQL 连接 |
-| `octura demo seed` | 生成通用演示项目 |
-| `octura demo seed --profile specloop-core` | 生成真实 SpecLoop Core 演示档案 |
-| `octura project create` | 创建或更新项目 |
-| `octura project list` | 列出项目 |
-| `octura record add` | 采集一条证据 |
-| `octura record list` | 按状态或类型查询证据 |
-| `octura record review` | 人工确认一条证据 |
+本地 1.0 不提供账号系统。reviewer 是调用者的明确声明，工作台会展示 `self_asserted` 和调用入口，不把它描述成已认证身份。
 
-记录类型：
+## 实时 Session
 
-| `kind` | 典型内容 |
-| --- | --- |
-| `conversation` | 用户意图、讨论与上下文 |
-| `requirement` | 产品需求与验收标准 |
-| `decision` | 关键取舍及其原因 |
-| `code` | 实现位置、提交或代码引用 |
-| `test` | 自动化测试与 CI 结果 |
-| `verification` | 人工验收和设计 QA |
-| `release` | 发布判断与发布事实 |
+长任务可以增量记录：
 
-证据来源：
+```bash
+# 创建 open Session
+docker compose exec octura octura-session-start \
+  --project checkout-ai \
+  --title "支付重试队列改造" \
+  --source-type agent \
+  --source-name codex \
+  --actor-type agent \
+  --actor-name codex \
+  --idempotency-key "payment-session-v1" \
+  --json
+
+# 按服务端 nextSequence 追加可见消息
+docker compose exec octura octura-session-append \
+  --project checkout-ai \
+  --session <session-id> \
+  --expected-sequence 1 \
+  --role user \
+  --content "把支付重试迁移到异步队列" \
+  --idempotency-key "payment-session-message-1"
+
+# close.json 中包含一到多条 Record
+docker compose exec octura octura-session-close \
+  --project checkout-ai \
+  --session <session-id> \
+  --file /tmp/close.json
+```
+
+关闭后的 Session 不可继续追加或修改。取消任务可以使用 `action=abandon`，但必须提交原因。
+
+## MCP stdio
+
+`octura-mcp` 提供强类型本地工具：
 
 ```text
-human / codex / cursor / claude / git / ci / api / other
+get_recording_protocol
+create_project / list_projects
+capture_activity
+start_session / append_messages / close_session
+list_sessions / get_session
+create_record / list_records / get_record
+review_record / supersede_record
 ```
 
-查看完整的本机帮助：
+在支持 MCP 的客户端中，可以通过 Docker 运行：
 
-```bash
-docker compose exec octura octura --help
+```json
+{
+  "mcpServers": {
+    "octura": {
+      "command": "docker",
+      "args": ["compose", "exec", "-T", "octura", "octura-mcp"]
+    }
+  }
+}
 ```
 
-## 现场分享建议
+客户端工作目录需要指向包含 `docker-compose.yml` 的 Octura 仓库。MCP、CLI 和 HTTP API 使用相同应用服务、Schema、状态机与幂等规则。
 
-1. 先打开 [SpecLoop Core 演示项目](http://localhost:3000/?project=specloop-core)。
-2. 用 `record add` 现场写入一条 `decision` 记录。
-3. 等待最多 6 秒，记录会自动出现在时间线并显示“等待审核”。
-4. 解释 raw evidence 与 reviewed fact 的区别。
-5. 在页面或 CLI 中完成人工确认。
+## HTTP API
 
-完整话术见 [中文演示脚本](docs/demo-script-zh.md)，真实档案来源见 [SpecLoop Core 演示档案](docs/specloop-core-demo-profile.md)。
+所有稳定接口位于 `/api/v1`，成功与失败都使用 `octura.api.v1` envelope。主要入口：
 
-## 数据与停止服务
+```text
+GET  /api/v1/protocols/record
+GET|POST /api/v1/projects
+POST /api/v1/projects/:slug/captures
+GET|POST /api/v1/projects/:slug/sessions
+POST /api/v1/projects/:slug/sessions/:id/messages
+POST /api/v1/projects/:slug/sessions/:id/close
+GET|POST /api/v1/projects/:slug/records
+GET  /api/v1/projects/:slug/records/:id
+POST /api/v1/projects/:slug/records/:id/reviews
+POST /api/v1/projects/:slug/records/:id/supersede
+```
 
-停止容器：
+完整语义见 [Octura 1.0 产品规格](docs/product/octura-v1-spec.md) 和 [Agent 记录协议](docs/recording-protocol-v1.md)。
+
+## 数据边界
+
+Octura 只保存用户可见的 `user / assistant / system / tool` 内容。`analysis/reasoning` 角色、私钥和高置信度访问凭证会被拒绝；请先脱敏，不要把思维链或大段原始日志写入系统。
+
+数据保存在 Docker volume `octura_data`：
 
 ```bash
 docker compose down
 ```
 
-数据保存在名为 `octura_data` 的 Docker volume 中。普通的 `docker compose down` 不会删除数据。
-
-如果明确要清空所有 Octura 本地数据：
+普通停止不会删除数据。只有明确需要清空本地预览数据时才运行：
 
 ```bash
 docker compose down -v
 ```
 
-> 这会永久删除当前 Docker volume 中的项目和证据记录。
-
-## 常见问题
-
-### CLI 提示无法连接 Octura
-
-先确认容器状态：
-
-```bash
-docker compose ps
-docker compose exec octura octura doctor
-```
-
-如果镜像或代码刚刚更新，重新构建：
-
-```bash
-docker compose up --build -d
-```
-
-### `localhost:3000` 已被占用
-
-修改 `docker-compose.yml` 中的端口映射，例如改为 `3100:3000`，然后访问 `http://localhost:3100`。
-
-### 重复执行 demo seed 会不会产生重复数据
-
-不会。演示记录使用固定 idempotency key，重复执行会复用同一条记录。
-
-### 为什么 AI 不能自动把记录标为 reviewed
-
-Octura 的边界是：AI 可以生成命令、查询和草稿，但不能生成事实。`reviewed` 表示有人愿意对这条事实承担判断责任。
-
-## 最小架构
-
-```text
-Octura CLI ─┐
-            ├── HTTP API ── Product contracts ── PostgreSQL
-Web UI ─────┘                                  └── immutable evidence trail
-```
-
-- CLI 是 Agent、CI 和自动化的接入表面。
-- API 提供稳定的 `octura.api.v1` JSON envelope。
-- PostgreSQL 保存来源、actor、raw/derived 和审核状态。
-- Web 负责展示、追踪和人工确认事实。
-
-## 本地开发
-
-需要 Node.js 20+、pnpm 9+ 和 PostgreSQL。
+## 开发验证
 
 ```bash
 pnpm install
-cp .env.example .env
-pnpm dev
-```
-
-另一个终端中：
-
-```bash
-pnpm cli -- doctor
-pnpm cli -- demo seed --profile specloop-core
-```
-
-质量检查：
-
-```bash
-pnpm typecheck
 pnpm test
+pnpm typecheck
 pnpm build
+docker compose up --build -d
+docker compose exec octura node scripts/smoke.mjs
 ```
 
-## Developer Preview 范围
-
-当前版本已覆盖本地最小证据闭环。暂未实现：
-
-- 登录、多租户和远端同步；
-- GitHub、Codex 与 CI 自动导入；
-- Product Version Manifest；
-- 云端部署与计费。
-
-这些能力会在设计伙伴验证当前闭环后继续建设。
+Octura 1.0 的产品边界是详细记录与展示；账号、云同步、Agent 执行、CI 调度、自动总结、关系图谱和 Spec Kit 导入均不属于稳定契约。

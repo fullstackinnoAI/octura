@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { serve } from "@hono/node-server";
@@ -5,311 +6,241 @@ import { serveStatic } from "@hono/node-server/serve-static";
 import { Hono } from "hono";
 import { ZodError, z } from "zod";
 import { closeDatabase, migrate, sql } from "./db.js";
-import { projectInput, recordInput, recordQuery, reviewInput } from "./domain.js";
 import {
+  API_SCHEMA_VERSION,
+  OcturaError,
+  appendMessagesInput,
+  captureInput,
+  getRecordingProtocol,
+  projectInput,
+  recordCreateInput,
+  recordQuery,
+  reviewInput,
+  sessionCloseInput,
+  sessionQuery,
+  sessionStartInput,
+  supersedeInput,
+} from "./domain.js";
+import {
+  appendMessages,
+  captureActivity,
+  closeSession,
   createRecord,
+  getDashboard,
   getProject,
-  getProjectSummary,
+  getRecordDetail,
+  getSessionDetail,
   listProjects,
   listRecords,
+  listSessions,
   reviewRecord,
+  startSession,
+  supersedeRecord,
   upsertProject,
-} from "./repository.js";
+  type Surface,
+} from "./service.js";
 
-const app = new Hono();
+type AppEnv = { Variables: { requestId: string } };
+const app = new Hono<AppEnv>();
 const port = Number(process.env.PORT ?? 3000);
 const publicRoot = join(process.cwd(), "public");
+const version = "1.0.0-rc.1";
+
+function surfaceOf(value: string | undefined): Surface {
+  return value === "web" || value === "cli" || value === "mcp" ? value : "api";
+}
+
+function response(data: unknown, requestId: string, idempotentReplay = false) {
+  return { schemaVersion: API_SCHEMA_VERSION, ok: true, data, error: null, requestId, idempotentReplay };
+}
 
 app.use("/api/*", async (context, next) => {
+  const requestId = context.req.header("X-Request-Id") ?? randomUUID();
+  context.set("requestId", requestId);
   await next();
   context.header("Cache-Control", "no-store");
-  context.header("X-Octura-Version", "0.1.0");
+  context.header("X-Octura-Version", version);
+  context.header("X-Request-Id", requestId);
 });
 
 app.get("/health", async (context) => {
-  await sql`SELECT 1`;
-  return context.json({ status: "ok", product: "Octura", version: "0.1.0", database: "connected" });
-});
-
-app.get("/api/projects", async (context) => {
-  return context.json({ schemaVersion: "octura.api.v1", data: await listProjects() });
-});
-
-app.post("/api/projects", async (context) => {
-  const input = projectInput.parse(await context.req.json());
-  const project = await upsertProject(input);
-  return context.json({ schemaVersion: "octura.api.v1", data: project }, 201);
-});
-
-app.get("/api/projects/:slug", async (context) => {
-  const project = await getProject(context.req.param("slug"));
-  if (!project) return context.json({ error: { code: "project_not_found", message: "未找到项目" } }, 404);
-  return context.json({ schemaVersion: "octura.api.v1", data: project });
-});
-
-app.get("/api/projects/:slug/dashboard", async (context) => {
-  const project = await getProject(context.req.param("slug"));
-  if (!project) return context.json({ error: { code: "project_not_found", message: "未找到项目" } }, 404);
-
-  const [summary, records] = await Promise.all([
-    getProjectSummary(project.id),
-    listRecords(project.id, { limit: 100 }),
-  ]);
-  return context.json({ schemaVersion: "octura.api.v1", data: { project, summary, records } });
-});
-
-app.get("/api/projects/:slug/records", async (context) => {
-  const project = await getProject(context.req.param("slug"));
-  if (!project) return context.json({ error: { code: "project_not_found", message: "未找到项目" } }, 404);
-
-  const filters = recordQuery.parse(context.req.query());
-  const records = await listRecords(project.id, filters);
-  return context.json({ schemaVersion: "octura.api.v1", data: records });
-});
-
-app.post("/api/projects/:slug/records", async (context) => {
-  const project = await getProject(context.req.param("slug"));
-  if (!project) return context.json({ error: { code: "project_not_found", message: "未找到项目" } }, 404);
-
-  const input = recordInput.parse(await context.req.json());
-  const record = await createRecord(project.id, input);
-  return context.json({ schemaVersion: "octura.api.v1", data: record }, 201);
-});
-
-app.post("/api/projects/:slug/records/:id/review", async (context) => {
-  const project = await getProject(context.req.param("slug"));
-  if (!project) return context.json({ error: { code: "project_not_found", message: "未找到项目" } }, 404);
-
-  const input = reviewInput.parse(await context.req.json().catch(() => ({})));
-  const record = await reviewRecord(project.id, context.req.param("id"), input);
-  if (!record) return context.json({ error: { code: "record_not_found", message: "未找到证据记录" } }, 404);
-  return context.json({ schemaVersion: "octura.api.v1", data: record });
-});
-
-const seedRequest = z.object({
-  profile: z.enum(["octura", "specloop-core"]).default("octura"),
-  slug: z.string().optional(),
-  name: z.string().optional(),
-});
-
-app.post("/api/demo/seed", async (context) => {
-  const request = seedRequest.parse(await context.req.json().catch(() => ({})));
-  const profile =
-    request.profile === "specloop-core"
-      ? {
-          slug: "specloop-core",
-          name: "SpecLoop Core · 真实项目演示",
-          description: "基于当前 SpecLoop Core 仓库提炼的 CLI-first 产品事实、代码证据与验证记录。",
-        }
-      : {
-          slug: "octura-demo",
-          name: "Octura 中文演示",
-          description: "一条可追溯、可验证、可承担的 AI 产品交付证据链。",
-        };
-  const project = await upsertProject(
-    projectInput.parse({
-      slug: request.slug ?? profile.slug,
-      name: request.name ?? profile.name,
-      description: profile.description,
-    }),
-  );
-
-  const now = Date.now();
-  const demoRecords =
-    request.profile === "specloop-core"
-      ? [
-          {
-            kind: "conversation",
-            title: "从 Agent 执行台收敛为产品事实系统",
-            body: "团队将 SpecLoop 的边界收敛为产品文档、版本、Task Pack 与生产记录系统；外部 Agent 和 CI 继续负责执行。",
-            source: "human",
-            actor: "woo + codex",
-            truth: "raw",
-            externalRef: "README.md",
-            idempotencyKey: "specloop-core-conversation-boundary",
-            occurredAt: new Date(now - 1000 * 60 * 92).toISOString(),
-            reviewed: true,
-            metadata: { principle: "AI 可以生成命令、查询和草稿，但不能生成事实" },
-          },
-          {
-            kind: "requirement",
-            title: "统一管理不可变的产品事实与修订",
-            body: "PRD、SPEC、Decision、Test Plan、Requirement、Product Version 与交付记录必须可追溯，并保留来源和人工确认状态。",
-            source: "human",
-            actor: "woo",
-            truth: "raw",
-            externalRef: "README.md",
-            idempotencyKey: "specloop-core-requirement-facts",
-            occurredAt: new Date(now - 1000 * 60 * 78).toISOString(),
-            reviewed: true,
-            metadata: { priority: "P0", acceptance: "事实保留来源、不可变修订和人工确认状态" },
-          },
-          {
-            kind: "decision",
-            title: "采用 CLI-first 的统一业务入口",
-            body: "CLI、MCP 与 API 全部调用 ProductCore.execute()；Web 只读取同一内核生成的 Read Model，不复制业务规则。",
-            source: "human",
-            actor: "woo",
-            truth: "raw",
-            externalRef: "docs/cli-first-refactor.md",
-            idempotencyKey: "specloop-core-decision-cli-first",
-            occurredAt: new Date(now - 1000 * 60 * 62).toISOString(),
-            reviewed: true,
-            metadata: { commandContract: "specloop.command.v1", phase: "第一阶段垂直链路" },
-          },
-          {
-            kind: "code",
-            title: "ProductCore.execute() 成为统一命令内核",
-            body: "当前工作区把项目、文档、需求、版本、Task Pack、记录和集成命令收口到 Product Core，并由 CLI 与 API 复用。",
-            source: "git",
-            actor: "codex",
-            truth: "raw",
-            externalRef: "packages/product-core/src/service.ts",
-            idempotencyKey: "specloop-core-code-product-core",
-            occurredAt: new Date(now - 1000 * 60 * 43).toISOString(),
-            reviewed: true,
-            metadata: {
-              files: ["packages/product-core/src/service.ts", "packages/product-core/src/catalog.ts", "apps/cli/src/index.ts"],
-              repositoryState: "working-tree",
-            },
-          },
-          {
-            kind: "test",
-            title: "Product Core 与 CLI 定向测试通过",
-            body: "本次本地验证运行 Product Core 3 项测试与 CLI 9 项测试，共 12 项全部通过。",
-            source: "ci",
-            actor: "codex-local-verification",
-            truth: "raw",
-            externalRef: "local://specloop-core/pnpm-targeted-tests",
-            idempotencyKey: "specloop-core-test-targeted-2026-08-28",
-            occurredAt: new Date(now - 1000 * 60 * 25).toISOString(),
-            reviewed: false,
-            metadata: {
-              verdict: "passed",
-              tests: 12,
-              suites: 4,
-              commands: ["pnpm --filter @specloop/product-core test", "pnpm --filter @specloop/cli test"],
-            },
-          },
-          {
-            kind: "verification",
-            title: "核心 Web 交互已有设计 QA 证据",
-            body: "时间线、SPEC 阅读态、控制室和产品工作台已完成桌面与移动端设计验证；报告保留验证结果和后续改进项。",
-            source: "human",
-            actor: "product-design-qa",
-            truth: "derived",
-            externalRef: "design-qa.md",
-            idempotencyKey: "specloop-core-verification-design-qa",
-            occurredAt: new Date(now - 1000 * 60 * 13).toISOString(),
-            reviewed: true,
-            metadata: { verdict: "passed", surfaces: ["timeline", "spec-detail", "control-room", "workbench"] },
-          },
-          {
-            kind: "release",
-            title: "CLI-first 第一阶段等待演示确认",
-            body: "文档、命令契约、Product Core、API/MCP 适配与展示型导航已形成垂直链路；正式发布前仍需确认演示叙事和仓库工作区状态。",
-            source: "git",
-            actor: "codex",
-            truth: "derived",
-            externalRef: "docs/cli-first-refactor.md",
-            idempotencyKey: "specloop-core-release-first-vertical-slice",
-            occurredAt: new Date(now - 1000 * 60 * 4).toISOString(),
-            reviewed: false,
-            metadata: { phase: "first-vertical-slice", status: "awaiting-demo-signoff" },
-          },
-        ]
-      : [
-          {
-            kind: "conversation",
-            title: "定义聚焦的产品证据工作台",
-            body: "团队需要一个最低可用产品：通过 CLI 采集 AI 协作过程，并在本地工作台展示可信记录。",
-            source: "codex",
-            actor: "woo + codex",
-            truth: "raw",
-            idempotencyKey: "demo-conversation",
-            occurredAt: new Date(now - 1000 * 60 * 72).toISOString(),
-            reviewed: true,
-            metadata: { session: "productization-kickoff" },
-          },
-          {
-            kind: "requirement",
-            title: "呈现可审计的 AI 交付链路",
-            body: "访问者需要快速理解提出了什么需求、发生了什么变更、证据来自哪里，以及是否经过人工审核。",
-            source: "human",
-            actor: "woo",
-            truth: "raw",
-            idempotencyKey: "demo-requirement",
-            occurredAt: new Date(now - 1000 * 60 * 58).toISOString(),
-            reviewed: true,
-            metadata: { priority: "P0", acceptance: "CLI、PostgreSQL 与 Web 在同一条本地链路中闭环" },
-          },
-          {
-            kind: "decision",
-            title: "Octura 聚焦记录事实，而不是替代执行工具",
-            body: "Octura 负责沉淀产品事实和交付证据；Codex、Cursor、Claude Code 与 CI 继续负责具体执行。",
-            source: "human",
-            actor: "woo",
-            truth: "raw",
-            idempotencyKey: "demo-decision",
-            occurredAt: new Date(now - 1000 * 60 * 44).toISOString(),
-            reviewed: true,
-            metadata: { principle: "AI 可以起草，人类负责确认事实" },
-          },
-          {
-            kind: "code",
-            title: "CLI 证据采集链路已经实现",
-            body: "Octura CLI 已能通过稳定的本地 API 创建项目、采集证据、查看历史，并提交人工审核。",
-            source: "git",
-            actor: "codex",
-            truth: "raw",
-            externalRef: "git:main:working-tree",
-            idempotencyKey: "demo-code",
-            occurredAt: new Date(now - 1000 * 60 * 27).toISOString(),
-            reviewed: true,
-            metadata: { files: ["src/cli.ts", "src/server.ts", "src/repository.ts"] },
-          },
-          {
-            kind: "test",
-            title: "Docker 冒烟测试通过",
-            body: "本地服务已成功启动，PostgreSQL 状态健康，API 可以正确写入并返回产品证据。",
-            source: "ci",
-            actor: "local-smoke-test",
-            truth: "raw",
-            externalRef: "local://docker-compose/smoke",
-            idempotencyKey: "demo-test",
-            occurredAt: new Date(now - 1000 * 60 * 12).toISOString(),
-            reviewed: false,
-            metadata: { verdict: "passed", environment: "docker-compose" },
-          },
-          {
-            kind: "verification",
-            title: "演示链路等待最终人工确认",
-            body: "检查工作台、现场运行 CLI 采集命令，并确认新记录连同原始来源一起出现在时间线中。",
-            source: "human",
-            actor: "demo-owner",
-            truth: "derived",
-            idempotencyKey: "demo-verification",
-            occurredAt: new Date(now - 1000 * 60 * 4).toISOString(),
-            reviewed: false,
-            metadata: { checklist: ["打开工作台", "采集记录", "审核证据"] },
-          },
-        ];
-
-  const records = [];
-  for (const item of demoRecords) {
-    const { reviewed, ...data } = item;
-    const record = await createRecord(project.id, recordInput.parse(data));
-    const note =
-      request.profile === "specloop-core"
-        ? "依据当前仓库文档、代码和 QA 报告确认"
-        : "已确认为发布演示中的可信事实";
-    records.push(reviewed ? await reviewRecord(project.id, record.id, { actor: "woo", note }) : record);
+  try {
+    await sql`SELECT 1`;
+    return context.json({ status: "ok", product: "Octura", version, database: "connected" });
+  } catch {
+    return context.json({ status: "error", product: "Octura", version, database: "unavailable", error: "PostgreSQL is not reachable" }, 503);
   }
+});
 
-  return context.json({
-    schemaVersion: "octura.api.v1",
-    data: { project, records, dashboardUrl: `/?project=${project.slug}` },
+app.get("/api/v1/protocols/record", (context) => context.json(response(getRecordingProtocol(), context.get("requestId"))));
+
+app.get("/api/v1/projects", async (context) => context.json(response(await listProjects(), context.get("requestId"))));
+
+app.post("/api/v1/projects", async (context) => {
+  const project = await upsertProject(projectInput.parse(await context.req.json()));
+  return context.json(response(project, context.get("requestId")), 201);
+});
+
+app.get("/api/v1/projects/:slug", async (context) => {
+  return context.json(response(await getProject(context.req.param("slug")), context.get("requestId")));
+});
+
+app.get("/api/v1/projects/:slug/dashboard", async (context) => {
+  return context.json(response(await getDashboard(context.req.param("slug")), context.get("requestId")));
+});
+
+app.post("/api/v1/projects/:slug/captures", async (context) => {
+  const input = captureInput.parse(await context.req.json());
+  const result = await captureActivity(context.req.param("slug"), input);
+  return context.json(response(result.data, context.get("requestId"), result.idempotentReplay), result.idempotentReplay ? 200 : 201);
+});
+
+app.get("/api/v1/projects/:slug/sessions", async (context) => {
+  const filters = sessionQuery.parse(context.req.query());
+  return context.json(response(await listSessions(context.req.param("slug"), filters), context.get("requestId")));
+});
+
+app.post("/api/v1/projects/:slug/sessions", async (context) => {
+  const input = sessionStartInput.parse(await context.req.json());
+  const result = await startSession(context.req.param("slug"), input);
+  return context.json(response(result.data, context.get("requestId"), result.idempotentReplay), result.idempotentReplay ? 200 : 201);
+});
+
+app.get("/api/v1/projects/:slug/sessions/:id", async (context) => {
+  return context.json(response(await getSessionDetail(context.req.param("slug"), context.req.param("id")), context.get("requestId")));
+});
+
+app.post("/api/v1/projects/:slug/sessions/:id/messages", async (context) => {
+  const input = appendMessagesInput.parse(await context.req.json());
+  const result = await appendMessages(context.req.param("slug"), context.req.param("id"), input);
+  return context.json(response(result.data, context.get("requestId"), result.idempotentReplay), result.idempotentReplay ? 200 : 201);
+});
+
+app.post("/api/v1/projects/:slug/sessions/:id/close", async (context) => {
+  const input = sessionCloseInput.parse(await context.req.json());
+  const result = await closeSession(context.req.param("slug"), context.req.param("id"), input);
+  return context.json(response(result.data, context.get("requestId"), result.idempotentReplay));
+});
+
+app.get("/api/v1/projects/:slug/records", async (context) => {
+  const filters = recordQuery.parse(context.req.query());
+  return context.json(response(await listRecords(context.req.param("slug"), filters), context.get("requestId")));
+});
+
+app.post("/api/v1/projects/:slug/records", async (context) => {
+  const input = recordCreateInput.parse(await context.req.json());
+  const result = await createRecord(context.req.param("slug"), input);
+  return context.json(response(result.data, context.get("requestId"), result.idempotentReplay), result.idempotentReplay ? 200 : 201);
+});
+
+app.get("/api/v1/projects/:slug/records/:id", async (context) => {
+  return context.json(response(await getRecordDetail(context.req.param("slug"), context.req.param("id")), context.get("requestId")));
+});
+
+app.post("/api/v1/projects/:slug/records/:id/reviews", async (context) => {
+  const input = reviewInput.parse(await context.req.json());
+  const result = await reviewRecord(
+    context.req.param("slug"),
+    context.req.param("id"),
+    input,
+    surfaceOf(context.req.header("X-Octura-Surface")),
+  );
+  return context.json(response(result.data, context.get("requestId"), result.idempotentReplay));
+});
+
+app.post("/api/v1/projects/:slug/records/:id/supersede", async (context) => {
+  const input = supersedeInput.parse(await context.req.json());
+  const result = await supersedeRecord(
+    context.req.param("slug"),
+    context.req.param("id"),
+    input,
+    surfaceOf(context.req.header("X-Octura-Surface")),
+  );
+  return context.json(response(result.data, context.get("requestId"), result.idempotentReplay), result.idempotentReplay ? 200 : 201);
+});
+
+const seedRequest = z.object({ profile: z.enum(["octura", "specloop-core"]).default("octura"), slug: z.string().optional(), name: z.string().optional() });
+
+function demoRecord(kind: "summary" | "requirement" | "decision" | "change" | "test" | "verification", title: string, result: string, key: string, sourceName: string, occurredAt: string) {
+  const isHuman = sourceName === "human";
+  const isCi = sourceName === "ci";
+  return {
+    kind,
+    title,
+    outcomeStatus: kind === "verification" ? "partial" as const : "completed" as const,
+    intent: {
+      goal: kind === "summary" ? "保留一次可独立理解的 AI 开发活动" : `形成可核验的${title}`,
+      constraints: ["只记录事实，不接管外部执行"],
+      acceptance: ["记录可回到原始 Session、来源和外部引用"],
+    },
+    result,
+    changes: kind === "change" ? [{ scope: "src/", description: "通过统一应用服务落地 CLI、API 与 MCP 的记录契约。" }] : [],
+    decisions: kind === "decision" ? [{ decision: result, rationale: "保持产品边界简单，并让事实来源可核验。" }] : [],
+    verification: kind === "test" ? [{ name: "Octura contract tests", status: "passed" as const, details: "Schema、状态机与幂等测试通过。" }] : [],
+    risks: kind === "verification" ? ["审核者身份为本地调用者自我声明，未经过账号认证。"] : [],
+    nextSteps: kind === "verification" ? ["由项目负责人检查 Record 详情与原始 Session。"] : [],
+    externalRefs: [{ type: "file" as const, value: kind === "change" ? "src/service.ts" : "docs/product/octura-v1-spec.md" }],
+    provenance: {
+      truth: isHuman || isCi ? "raw" as const : "derived" as const,
+      sourceType: isHuman ? "human" as const : isCi ? "ci" as const : "agent" as const,
+      sourceName,
+      actorType: isHuman ? "human" as const : isCi ? "system" as const : "agent" as const,
+      actorName: isHuman ? "woo" : sourceName,
+    },
+    occurredAt,
+    idempotencyKey: key,
+  };
+}
+
+app.post("/api/v1/demo/seed", async (context) => {
+  const input = seedRequest.parse(await context.req.json().catch(() => ({})));
+  const isSpecLoop = input.profile === "specloop-core";
+  const slug = input.slug ?? (isSpecLoop ? "specloop-core" : "octura-demo");
+  const project = await upsertProject({
+    slug,
+    name: input.name ?? (isSpecLoop ? "SpecLoop Core · 真实项目演示" : "Octura 1.0 中文演示"),
+    description: isSpecLoop ? "从 SpecLoop 的复杂产品边界收敛为详细记录与展示的真实重构档案。" : "完整可见对话、结构化成果、来源和人工确认组成的本地开发档案。",
   });
+  const base = "2026-08-29T01:";
+  const records = [
+    demoRecord("summary", isSpecLoop ? "确认 SpecLoop 重构为 Octura" : "定义 Octura 1.0 记录边界", "团队保留来源追溯与人工确认，移除文档版本、Task Pack、同步和执行门禁。", `${slug}:summary:v1`, "codex", `${base}00:00.000Z`),
+    demoRecord("requirement", "完整保存可见对话与成果记录", "一次开发活动必须同时保存完整可见 Session 和一到多条独立可读的结构化 Record。", `${slug}:requirement:v1`, "human", `${base}05:00.000Z`),
+    demoRecord("decision", "采用批量与实时双轨采集", "短任务使用原子批量 Capture，长任务使用 start、append、close 实时 Session。", `${slug}:decision:v1`, "codex", `${base}10:00.000Z`),
+    demoRecord("change", "统一记录内核已经形成", "CLI、HTTP API 与 MCP 复用同一套 Schema、幂等性和状态转换。", `${slug}:change:v1`, "codex", `${base}15:00.000Z`),
+    demoRecord("test", "记录契约与状态机验证通过", "合法记录、非法状态转换、消息序号和幂等冲突均有自动化验证。", `${slug}:test:v1`, "ci", `${base}20:00.000Z`),
+    demoRecord("verification", "1.0 工作台等待最终人工确认", "Record 与 Session 详情已经可展示，发布前仍需完成真实项目 dogfood。", `${slug}:verification:v1`, "codex", `${base}25:00.000Z`),
+  ];
+  const capture = captureInput.parse({
+    idempotencyKey: `${slug}:capture:v1`,
+    session: {
+      title: isSpecLoop ? "SpecLoop Core → Octura 1.0 产品收敛" : "Octura 1.0 稳定版定义",
+      sourceType: "agent",
+      sourceName: "codex",
+      actorType: "agent",
+      actorName: "codex",
+      externalRefs: [{ type: "file", value: "docs/product/octura-v1-spec.md" }],
+      startedAt: `${base}00:00.000Z`,
+      endedAt: `${base}30:00.000Z`,
+      messages: [
+        { role: "user", content: "Octura 第一个稳定版本只做详细记录和展示，同时保留完整可见对话。", actorName: "woo", occurredAt: `${base}00:00.000Z` },
+        { role: "assistant", content: "将产品收敛为 Project、Session、Record、ReviewEvent 和 SupersedeRelation，并让 CLI、API、MCP 复用同一内核。", actorName: "codex", occurredAt: `${base}08:00.000Z` },
+        { role: "tool", content: "验证摘要：当前 Octura 基线测试和 TypeScript 类型检查通过。", actorName: "local-verification", occurredAt: `${base}18:00.000Z` },
+        { role: "assistant", content: "实施计划已锁定：双轨采集、结构化 Markdown、追加式审核修正和详细工作台。", actorName: "codex", occurredAt: `${base}28:00.000Z` },
+      ],
+    },
+    records,
+  });
+  const captured = await captureActivity(project.slug, capture);
+  for (const record of captured.data.records.slice(0, 4)) {
+    await reviewRecord(project.slug, record.id, {
+      action: "confirm",
+      reviewer: "woo",
+      attestation: "human_reviewed",
+      note: "已核对原始 Session、来源与成果内容",
+      idempotencyKey: `${slug}:review:${record.id}`,
+    }, "web");
+  }
+  return context.json(response({ project, capture: captured.data, dashboardUrl: `/?project=${project.slug}` }, context.get("requestId"), captured.idempotentReplay), captured.idempotentReplay ? 200 : 201);
 });
 
 app.get("/app.css", serveStatic({ path: "./public/app.css" }));
@@ -317,21 +248,20 @@ app.get("/app.js", serveStatic({ path: "./public/app.js" }));
 app.get("*", async (context) => context.html(await readFile(join(publicRoot, "index.html"), "utf8")));
 
 app.onError((error, context) => {
+  const requestId = context.get("requestId") ?? randomUUID();
   if (error instanceof ZodError) {
-    return context.json(
-      { error: { code: "validation_error", message: error.issues.map((issue) => issue.message).join("; ") } },
-      400,
-    );
+    return context.json({ schemaVersion: API_SCHEMA_VERSION, ok: false, data: null, error: { code: "validation_error", message: "请求不符合稳定契约", details: error.issues }, requestId }, 422);
+  }
+  if (error instanceof OcturaError) {
+    return context.json({ schemaVersion: API_SCHEMA_VERSION, ok: false, data: null, error: { code: error.code, message: error.message, details: error.details }, requestId }, error.status as 400);
   }
   console.error(error);
-  return context.json({ error: { code: "internal_error", message: "Octura 暂时无法完成当前请求" } }, 500);
+  return context.json({ schemaVersion: API_SCHEMA_VERSION, ok: false, data: null, error: { code: "internal_error", message: "Octura 暂时无法完成当前请求" }, requestId }, 500);
 });
 
 await migrate();
 
-const server = serve({ fetch: app.fetch, port }, (info) => {
-  console.log(`Octura is ready at http://localhost:${info.port}`);
-});
+const server = serve({ fetch: app.fetch, port }, (info) => console.log(`Octura ${version} is ready at http://localhost:${info.port}`));
 
 async function shutdown(signal: string) {
   console.log(`Received ${signal}; closing Octura`);

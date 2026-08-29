@@ -1,0 +1,36 @@
+{
+  "schemaVersion": "octura.record.v1",
+  "kind": "decision",
+  "title": "支付重试改为队列驱动",
+  "outcomeStatus": "completed",
+  "intent": {
+    "goal": "避免支付网关故障被同步重试放大",
+    "constraints": ["保持支付请求幂等"],
+    "acceptance": ["重复消息不会产生重复扣款", "第三次失败进入死信队列"]
+  },
+  "result": "支付重试已经迁移到异步队列，HTTP 请求不再同步等待重试。",
+  "changes": [
+    { "scope": "src/payments/retry-worker.ts", "description": "新增幂等消费与指数退避。" }
+  ],
+  "decisions": [
+    { "decision": "最多重试三次后进入死信队列", "rationale": "限制故障放大，并保留人工处理入口。" }
+  ],
+  "verification": [
+    { "name": "支付重试集成测试", "status": "passed", "details": "18 项用例通过", "ref": "build:123" }
+  ],
+  "risks": [],
+  "nextSteps": ["观察一周死信队列数量"],
+  "externalRefs": [
+    { "type": "file", "value": "src/payments/retry-worker.ts" },
+    { "type": "build", "value": "https://github.com/example/checkout/actions/runs/123" }
+  ],
+  "provenance": {
+    "truth": "derived",
+    "sourceType": "agent",
+    "sourceName": "codex",
+    "actorType": "agent",
+    "actorName": "codex"
+  },
+  "occurredAt": "2026-08-29T08:00:00+08:00",
+  "idempotencyKey": "payment-retry-decision-v1"
+}

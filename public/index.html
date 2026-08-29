@@ -3,172 +3,121 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#251052" />
-    <meta name="description" content="Octura — AI 软件交付的可信事实工作台" />
-    <title>Octura · 产品事实工作台</title>
+    <meta name="description" content="Octura · 本地优先的 AI 软件开发记录工作台" />
+    <title>Octura · Recording Workbench</title>
     <link rel="stylesheet" href="/app.css" />
   </head>
   <body>
     <div class="app-shell">
       <aside class="sidebar">
-        <a class="brand" href="/" aria-label="Octura 首页">
-          <span class="brand-copy"><span class="brand-word">Octura</span><small data-i18n="brandSubtitle">产品事实工作台</small></span>
-        </a>
-
-        <div class="workspace-picker">
-          <label for="project-select" data-i18n="currentProject">当前项目</label>
-          <div class="select-wrap">
-            <select id="project-select" aria-label="选择项目"></select>
-          </div>
+        <div class="brand">
+          <span class="brand-mark">O</span>
+          <div><strong>Octura</strong><small>RECORDING WORKBENCH</small></div>
         </div>
-
-        <nav class="nav" aria-label="主要导航">
-          <p data-i18n="workspaceGroup">事实工作台</p>
-          <a class="nav-item active" href="#overview">
-            <span data-i18n="overview">项目概览</span>
-          </a>
-          <a class="nav-item" href="#records">
-            <span data-i18n="evidenceRecords">证据记录</span><span id="nav-count" class="nav-count">0</span>
-          </a>
-          <a class="nav-item muted" href="#" aria-disabled="true">
-            <span data-i18n="productVersions">产品版本</span><span class="soon" data-i18n="soon">即将开放</span>
-          </a>
-          <p data-i18n="connectGroup">连接与采集</p>
-          <a class="nav-item" href="#capture">
-            <span data-i18n="cliCapture">CLI 采集</span>
-          </a>
-          <a class="nav-item muted" href="#" aria-disabled="true">
-            <span data-i18n="integrations">外部集成</span><span class="soon" data-i18n="soon">即将开放</span>
-          </a>
+        <label class="workspace-label" for="project-select" data-i18n="workspace">项目空间</label>
+        <select id="project-select" aria-label="选择项目" data-i18n-aria-label="projectSelectLabel"></select>
+        <nav class="nav" aria-label="工作台导航" data-i18n-aria-label="navigationLabel">
+          <button class="nav-item active" data-view="overview"><span>01</span><b data-i18n="overview">项目概览</b></button>
+          <button class="nav-item" data-view="review"><span>02</span><b data-i18n="reviewInbox">待审核</b><em id="review-count">0</em></button>
+          <button class="nav-item" data-view="sessions"><span>03</span><b data-i18n="sessions">原始会话</b></button>
+          <button class="nav-item" data-view="capture"><span>04</span><b data-i18n="captureGuide">采集指南</b></button>
         </nav>
-
-        <div class="sidebar-bottom">
-          <div class="local-card">
-            <div class="local-status"><span class="pulse"></span><span data-i18n="localSecure">本地安全运行</span></div>
-            <p data-i18n="localDescription">全部产品证据保存在当前 Docker 环境中。</p>
-          </div>
-          <div class="build-label" data-i18n="buildLabel">Octura · 开发预览版 0.1.0</div>
+        <div class="local-card">
+          <span class="local-dot"></span>
+          <div><strong data-i18n="localFirst">本地运行</strong><small data-i18n="localCopy">数据保存在 PostgreSQL</small></div>
         </div>
+        <p class="build-label">Octura 1.0.0-rc.1</p>
       </aside>
 
-      <main class="main">
+      <div class="page">
         <header class="topbar">
-          <button class="mobile-brand" aria-label="打开导航">Octura</button>
-          <div class="breadcrumbs"><span>Octura</span><b>/</b><strong id="breadcrumb-project">事实工作台</strong></div>
+          <button class="mobile-menu" id="mobile-menu" aria-label="打开导航" aria-expanded="false">O</button>
+          <div class="breadcrumbs"><span>Octura</span><i>/</i><strong id="breadcrumb">项目概览</strong></div>
           <div class="top-actions">
-            <span id="sync-status" class="sync-status"><span class="pulse"></span>实时同步</span>
-            <div class="language-switch" role="group" aria-label="Language / 语言">
-              <button type="button" data-locale="zh" aria-pressed="true">中文</button>
-              <button type="button" data-locale="en" aria-pressed="false">EN</button>
+            <span class="live-state"><i></i><span data-i18n="live">实时刷新</span></span>
+            <div class="language-switch" aria-label="Language">
+              <button data-lang="zh" class="active">中文</button><button data-lang="en">EN</button>
             </div>
-            <button id="refresh-button" class="icon-button" title="刷新数据" aria-label="刷新数据" data-i18n="refresh" data-i18n-title="refreshData" data-i18n-aria="refreshData">刷新</button>
-            <a class="docs-link" href="#capture" data-i18n="cliGuide">CLI 指南</a>
           </div>
         </header>
 
-        <div id="empty-state" class="empty-state hidden">
-          <span class="eyebrow" data-i18n="truthLayer">AI 软件生产的可信事实层</span>
-          <h1 data-i18n="emptyTitle">让每一次 AI 交付都有依据。</h1>
-          <p data-i18n="emptyDescription">写入演示数据，或从 Octura CLI 创建项目，体验完整的本地证据闭环。</p>
-          <div class="empty-actions">
-            <button id="seed-button" class="primary-button" data-i18n="seedDemo">载入中文演示数据</button>
-            <code id="empty-command">octura project create --slug my-project --name "我的项目"</code>
-          </div>
-        </div>
-
-        <div id="dashboard" class="dashboard hidden">
-          <section id="overview" class="hero">
-            <div class="hero-copy">
-              <div class="hero-kicker"><span class="kicker-dot"></span><span data-i18n="heroKicker">AI 软件交付的可信事实层</span></div>
-              <h1 id="project-name">Octura 中文演示</h1>
-              <p id="project-description">一条可追溯、可验证、可承担的 AI 产品交付证据链。</p>
-              <div class="hero-meta" data-i18n="heroMeta">本地优先 · 开放采集 · 人工确认</div>
+        <main id="workspace" class="workspace hidden">
+          <section class="hero" id="hero">
+            <div>
+              <span class="eyebrow" data-i18n="heroEyebrow">AI 软件开发活动档案</span>
+              <h1 id="project-name">—</h1>
+              <p id="project-description">—</p>
+              <div class="hero-meta"><span data-i18n="heroMeta">完整可见对话</span><i></i><span data-i18n="structuredRecords">结构化成果</span><i></i><span data-i18n="appendOnlyReview">追加式审核</span></div>
             </div>
             <div class="hero-actions">
-              <button id="copy-capture" class="secondary-button" data-i18n="copyCapture">复制采集命令</button>
-              <a href="#records" class="primary-button" data-i18n="reviewEvidence">审核证据</a>
+              <button class="secondary-button" id="copy-prompt" data-i18n="copyPrompt">复制提示词命令</button>
+              <button class="primary-button" data-view-link="review" data-i18n="openReview">打开待审核</button>
             </div>
           </section>
 
-          <section class="metrics" aria-label="项目指标">
-            <article class="metric-card">
-              <div class="metric-top"><span data-i18n="evidenceRecords">证据记录</span></div>
-              <strong id="metric-total">—</strong>
-              <p id="metric-sources-note">来自 <span id="metric-sources">—</span> 个可信来源</p>
-            </article>
-            <article class="metric-card">
-              <div class="metric-top"><span data-i18n="humanReviewed">人工已审核</span></div>
-              <strong id="metric-reviewed">—</strong>
-              <p id="metric-reviewed-note">已成为可信产品事实</p>
-            </article>
-            <article class="metric-card">
-              <div class="metric-top"><span data-i18n="awaitingReview">等待确认</span></div>
-              <strong id="metric-captured">—</strong>
-              <p data-i18n="awaitingNote">需要人的判断与确认</p>
-            </article>
-            <article class="metric-card coverage-card">
-              <div class="metric-top"><span data-i18n="coverage">证据链覆盖率</span></div>
-              <div class="coverage-value"><strong id="metric-coverage">—</strong><small>%</small></div>
-              <div class="mini-progress"><span id="metric-coverage-bar"></span></div>
-            </article>
+          <section class="metrics" aria-label="项目指标" data-i18n-aria-label="metricsLabel">
+            <article><span data-i18n="totalRecords">Record 总数</span><strong id="metric-total">0</strong><small data-i18n="recordsStored">结构化成果记录</small></article>
+            <article><span data-i18n="reviewedRecords">已确认</span><strong id="metric-reviewed">0</strong><small data-i18n="selfAsserted">具名、自我声明审核</small></article>
+            <article><span data-i18n="pendingRecords">待审核</span><strong id="metric-captured">0</strong><small data-i18n="needsJudgement">等待人的判断</small></article>
+            <article><span data-i18n="sessionCount">Session</span><strong id="metric-sessions">0</strong><small data-i18n="visibleConversations">完整可见对话</small></article>
           </section>
 
-          <div class="content-grid">
-            <section id="records" class="panel timeline-panel">
-              <div class="panel-header">
-                <div>
-                  <span class="eyebrow" data-i18n="timeline">证据时间线</span>
-                  <h2 data-i18n="timelineTitle">产品事实是如何形成的</h2>
-                </div>
-                <div class="filter-group" role="group" aria-label="筛选证据">
-                  <button class="filter active" data-filter="all" data-i18n="all">全部</button>
-                  <button class="filter" data-filter="captured" data-i18n="pending">待审核</button>
-                  <button class="filter" data-filter="reviewed" data-i18n="reviewed">已审核</button>
-                </div>
+          <section id="records-view" class="panel records-panel">
+            <div class="panel-heading">
+              <div><span class="eyebrow" data-i18n="timeline">成果时间线</span><h2 id="records-title" data-i18n="allRecords">所有 Record</h2></div>
+              <div class="filters">
+                <label class="search"><span>⌕</span><input id="search-input" type="search" data-i18n-placeholder="searchPlaceholder" placeholder="搜索结果、决策、代码或引用" /></label>
+                <select id="kind-filter" aria-label="按类型筛选" data-i18n-aria-label="kindFilterLabel"><option value="" data-i18n="allKinds">全部类型</option></select>
+                <select id="status-filter" aria-label="按状态筛选" data-i18n-aria-label="statusFilterLabel"><option value="" data-i18n="allStatuses">全部状态</option></select>
               </div>
-              <div id="timeline" class="timeline" aria-live="polite">
-                <div class="loading-row"><span></span><span></span><span></span></div>
-              </div>
-            </section>
+            </div>
+            <div id="records-list" class="records-list" aria-live="polite"></div>
+            <button id="load-more-records" class="load-more hidden" data-i18n="loadMore">加载更多</button>
+          </section>
 
-            <aside class="inspector">
-              <section class="panel truth-panel">
-                <div class="panel-header compact">
-                  <div>
-                    <span class="eyebrow" data-i18n="trustCheck">可信度检查</span>
-                    <h2 data-i18n="chainIntegrity">证据链完整性</h2>
-                  </div>
-                  <span id="health-badge" class="health-badge">正在构建</span>
-                </div>
-                <p class="panel-copy" data-i18n="chainDescription">可信交付必须连接用户意图、产品约束、关键决策、代码实现和验证结果。</p>
-                <div id="evidence-chain" class="evidence-chain"></div>
-                <div class="principle">
-                  <p data-i18n="principle">AI 负责提案，人类负责事实与判断。只有经过审核的证据，才能成为产品事实。</p>
-                </div>
-              </section>
+          <section id="sessions-view" class="panel hidden">
+            <div class="panel-heading"><div><span class="eyebrow" data-i18n="rawEvidence">原始证据</span><h2 data-i18n="sessionArchive">Session 档案</h2></div></div>
+            <div id="sessions-list" class="sessions-list"></div>
+          </section>
 
-              <section id="capture" class="panel capture-panel">
-                <div class="capture-heading">
-                  <span data-i18n="captureFromAgent">从任意 Agent 采集</span>
-                </div>
-                <pre><code id="capture-command">octura record add \
+          <section id="capture-view" class="capture-layout hidden">
+            <article class="panel guide-card">
+              <span class="eyebrow" data-i18n="agentProtocol">Agent 记录协议</span>
+              <h2 data-i18n="promptTitle">先取得内置提示词与 Schema</h2>
+              <p data-i18n="promptCopy">Octura 不调用模型；Agent 读取版本化协议后生成结构化 Record。</p>
+              <pre><code>octura-record-prompt --json</code></pre>
+            </article>
+            <article class="panel guide-card dark">
+              <span class="eyebrow" data-i18n="batchCapture">批量原子采集</span>
+              <h2 data-i18n="captureTitle">一次保存对话与成果</h2>
+              <pre><code id="capture-command">octura-capture-add \
   --project octura-demo \
-  --kind decision \
-  --title "保留产品证据" \
-  --body "事实必须经过人工确认" \
-  --source codex</code></pre>
-                <div class="capture-footer">
-                  <span><span class="pulse"></span><span data-i18n="autoTimeline">写入后自动出现在时间线</span></span>
-                  <button id="copy-terminal" title="复制命令" data-i18n="copy" data-i18n-title="copyCommand">复制</button>
-                </div>
-              </section>
-            </aside>
-          </div>
-        </div>
-      </main>
+  --file capture.json</code></pre>
+              <button id="copy-capture" data-i18n="copyCommand">复制命令</button>
+            </article>
+            <article class="panel guide-card notice">
+              <h3 data-i18n="privacyTitle">记录边界</h3>
+              <p data-i18n="privacyCopy">仅保存完整可见对话；隐藏推理、思维链、凭证和大段原始日志会被拒绝。</p>
+            </article>
+          </section>
+        </main>
+
+        <section id="empty-state" class="empty-state hidden">
+          <div class="empty-mark">O</div><span class="eyebrow">OCTURA 1.0</span>
+          <h1 data-i18n="emptyTitle">还没有本地项目</h1>
+          <p data-i18n="emptyCopy">生成一套包含完整 Session、结构化 Record 和审核历史的演示档案。</p>
+          <button id="seed-demo" class="primary-button" data-i18n="createDemo">创建演示项目</button>
+        </section>
+      </div>
     </div>
 
-    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+    <dialog id="detail-dialog" class="detail-dialog">
+      <div class="dialog-shell">
+        <header><div><span id="detail-eyebrow" class="eyebrow">DETAIL</span><h2 id="detail-title">—</h2></div><button id="close-detail" aria-label="关闭" data-i18n-aria-label="close">×</button></header>
+        <div id="detail-content" class="detail-content"></div>
+      </div>
+    </dialog>
+    <div id="toast" class="toast" role="status"></div>
     <script type="module" src="/app.js"></script>
   </body>
 </html>
