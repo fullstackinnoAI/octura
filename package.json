@@ -5,13 +5,27 @@
   "description": "Evidence OS for AI software delivery",
   "type": "module",
   "bin": {
-    "octura": "./dist/cli.js"
+    "octura-doctor": "./dist/octura-doctor.js",
+    "octura-demo-seed": "./dist/octura-demo-seed.js",
+    "octura-project-create": "./dist/octura-project-create.js",
+    "octura-project-list": "./dist/octura-project-list.js",
+    "octura-record-add": "./dist/octura-record-add.js",
+    "octura-record-list": "./dist/octura-record-list.js",
+    "octura-record-review": "./dist/octura-record-review.js",
+    "octura-spec-kit-import": "./dist/octura-spec-kit-import.js"
   },
   "scripts": {
     "dev": "tsx watch src/server.ts",
     "build": "tsc -p tsconfig.json",
     "start": "node dist/server.js",
-    "cli": "tsx src/cli.ts",
+    "octura-doctor": "tsx src/octura-doctor.ts",
+    "octura-demo-seed": "tsx src/octura-demo-seed.ts",
+    "octura-project-create": "tsx src/octura-project-create.ts",
+    "octura-project-list": "tsx src/octura-project-list.ts",
+    "octura-record-add": "tsx src/octura-record-add.ts",
+    "octura-record-list": "tsx src/octura-record-list.ts",
+    "octura-record-review": "tsx src/octura-record-review.ts",
+    "octura-spec-kit-import": "tsx src/octura-spec-kit-import.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run"
   },

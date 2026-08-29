@@ -72,7 +72,7 @@
           <p data-i18n="emptyDescription">写入演示数据，或从 Octura CLI 创建项目，体验完整的本地证据闭环。</p>
           <div class="empty-actions">
             <button id="seed-button" class="primary-button" data-i18n="seedDemo">载入中文演示数据</button>
-            <code id="empty-command">octura project create --slug my-project --name "我的项目"</code>
+            <code id="empty-command">octura-project-create --slug my-project --name "我的项目"</code>
           </div>
         </div>
 
@@ -151,7 +151,7 @@
                 <div class="capture-heading">
                   <span data-i18n="captureFromAgent">从任意 Agent 采集</span>
                 </div>
-                <pre><code id="capture-command">octura record add \
+                <pre><code id="capture-command">octura-record-add \
   --project octura-demo \
   --kind decision \
   --title "保留产品证据" \

@@ -23,7 +23,7 @@ Octura 把 AI 辅助开发中的对话、需求、决策、代码引用、测试
 git clone https://github.com/fullstackinnoAI/octura.git
 cd octura
 docker compose up --build -d
-docker compose exec octura octura demo seed --profile specloop-core
+docker compose exec octura octura-demo-seed --profile specloop-core
 ```
 
 打开 [http://localhost:3000/?project=specloop-core](http://localhost:3000/?project=specloop-core)。
@@ -38,13 +38,13 @@ docker compose exec octura octura demo seed --profile specloop-core
 不加 `--profile` 时会生成通用的 `octura-demo` 项目：
 
 ```bash
-docker compose exec octura octura demo seed
+docker compose exec octura octura-demo-seed
 ```
 
 检查服务和数据库：
 
 ```bash
-docker compose exec octura octura doctor
+docker compose exec octura octura-doctor
 ```
 
 预期输出：
@@ -66,18 +66,45 @@ Web 工作台右上角支持中文 / English 即时切换，并会记住选择�
 每条记录都保存：
 
 - `kind`：这是需求、决策、代码还是测试；
-- `source`：证据来自人、Agent、Git 或 CI；
+- `source`：证据来自人、Agent、Git、CI 或 Spec Kit；
 - `actor`：谁执行了采集；
 - `truth`：原始证据或派生判断；
 - `externalRef`：对应文件、提交、构建或外部记录；
 - `status`：仍待审核，还是已经成为产品事实。
+
+## 读取 Spec Kit 记录
+
+Octura 兼容 Spec Kit 的 idea assessment 与 delivery artifacts，并将 `.specify/`、`specs/` 视为只读来源。先预览将要导入的记录：
+
+```bash
+octura-spec-kit-import \
+  --root /path/to/spec-kit-project \
+  --project my-project \
+  --dry-run
+```
+
+确认后执行导入：
+
+```bash
+OCTURA_API_URL=http://localhost:3000 octura-spec-kit-import \
+  --root /path/to/spec-kit-project \
+  --project my-project
+```
+
+Octura 不会修改 `.specify/` 或 `specs/`。导入索引保存在 `.octura/oct-imports/oct-spec-kit-index.json`；同一文件内容重复导入具有幂等性，内容变化则产生新的证据修订。详细约定见 [Octura × Spec Kit 兼容设计](docs/spec-kit-compatibility.md)。
+
+只查看 Spec Kit 来源的记录：
+
+```bash
+octura-record-list --project my-project --source spec-kit
+```
 
 ![CLI 写入后，证据自动出现在 Octura 时间线](docs/assets/octura-cli-capture.jpg)
 
 ### 1. 创建项目
 
 ```bash
-docker compose exec octura octura project create \
+docker compose exec octura octura-project-create \
   --slug checkout-ai \
   --name "AI Checkout" \
   --description "AI 辅助改造结账流程的交付档案"
@@ -86,7 +113,7 @@ docker compose exec octura octura project create \
 查看已有项目：
 
 ```bash
-docker compose exec octura octura project list
+docker compose exec octura octura-project-list
 ```
 
 ### 2. 采集一条关键决策
@@ -94,7 +121,7 @@ docker compose exec octura octura project list
 下面的案例记录了“为什么把支付重试交给队列处理”。它不是提交代码，而是保存这次变更的产品意图和来源。
 
 ```bash
-docker compose exec octura octura record add \
+docker compose exec octura octura-record-add \
   --project checkout-ai \
   --kind decision \
   --title "支付重试改为队列驱动" \
@@ -113,7 +140,7 @@ CLI 会返回记录 ID、来源和当前状态。新记录默认是 `captured`�
 
 ```bash
 docker compose cp ./payment-retry-requirement.md octura:/tmp/payment-retry-requirement.md
-docker compose exec octura octura record add \
+docker compose exec octura octura-record-add \
   --project checkout-ai \
   --kind requirement \
   --title "支付请求必须可以安全重试" \
@@ -128,7 +155,7 @@ docker compose exec octura octura record add \
 代码证据保留实现位置：
 
 ```bash
-docker compose exec octura octura record add \
+docker compose exec octura octura-record-add \
   --project checkout-ai \
   --kind code \
   --title "实现支付重试队列" \
@@ -141,7 +168,7 @@ docker compose exec octura octura record add \
 测试证据可以携带结构化 metadata：
 
 ```bash
-docker compose exec octura octura record add \
+docker compose exec octura octura-record-add \
   --project checkout-ai \
   --kind test \
   --title "支付重试集成测试通过" \
@@ -155,7 +182,7 @@ docker compose exec octura octura record add \
 ### 4. 查询等待审核的证据
 
 ```bash
-docker compose exec octura octura record list \
+docker compose exec octura octura-record-list \
   --project checkout-ai \
   --status captured
 ```
@@ -163,7 +190,7 @@ docker compose exec octura octura record list \
 也可以按类型过滤：
 
 ```bash
-docker compose exec octura octura record list \
+docker compose exec octura octura-record-list \
   --project checkout-ai \
   --kind test
 ```
@@ -175,7 +202,7 @@ docker compose exec octura octura record list \
 ```bash
 RECORD_ID="把上一步输出的记录 ID 粘贴到这里"
 
-docker compose exec octura octura record review \
+docker compose exec octura octura-record-review \
   --project checkout-ai \
   --id "$RECORD_ID" \
   --actor "release-owner" \
@@ -189,7 +216,7 @@ docker compose exec octura octura record review \
 所有 CLI 命令都支持 `--json`。输出是稳定的 JSON，适合 Codex、CI 或本地脚本继续处理。
 
 ```bash
-docker compose exec octura octura record list \
+docker compose exec octura octura-record-list \
   --project checkout-ai \
   --status captured \
   --json
@@ -198,12 +225,12 @@ docker compose exec octura octura record list \
 使用 `jq` 取得第一条待审核记录：
 
 ```bash
-RECORD_ID=$(docker compose exec -T octura octura record list \
+RECORD_ID=$(docker compose exec -T octura octura-record-list \
   --project checkout-ai \
   --status captured \
   --json | jq -r '.[0].id')
 
-docker compose exec octura octura record review \
+docker compose exec octura octura-record-review \
   --project checkout-ai \
   --id "$RECORD_ID" \
   --actor "release-owner"
@@ -212,21 +239,22 @@ docker compose exec octura octura record review \
 如果 CLI 不在 Docker 容器中，使用 `OCTURA_API_URL` 指向 Octura API：
 
 ```bash
-OCTURA_API_URL=http://localhost:3000 pnpm cli -- doctor
+OCTURA_API_URL=http://localhost:3000 octura-doctor
 ```
 
 ## CLI 命令速查
 
 | 命令 | 用途 |
 | --- | --- |
-| `octura doctor` | 检查 API 与 PostgreSQL 连接 |
-| `octura demo seed` | 生成通用演示项目 |
-| `octura demo seed --profile specloop-core` | 生成真实 SpecLoop Core 演示档案 |
-| `octura project create` | 创建或更新项目 |
-| `octura project list` | 列出项目 |
-| `octura record add` | 采集一条证据 |
-| `octura record list` | 按状态或类型查询证据 |
-| `octura record review` | 人工确认一条证据 |
+| `octura-doctor` | 检查 API 与 PostgreSQL 连接 |
+| `octura-demo-seed` | 生成通用演示项目 |
+| `octura-demo-seed --profile specloop-core` | 生成真实 SpecLoop Core 演示档案 |
+| `octura-project-create` | 创建或更新项目 |
+| `octura-project-list` | 列出项目 |
+| `octura-record-add` | 采集一条证据 |
+| `octura-record-list` | 按状态或类型查询证据 |
+| `octura-record-review` | 人工确认一条证据 |
+| `octura-spec-kit-import` | 只读发现并导入 Spec Kit 记录 |
 
 记录类型：
 
@@ -243,13 +271,13 @@ OCTURA_API_URL=http://localhost:3000 pnpm cli -- doctor
 证据来源：
 
 ```text
-human / codex / cursor / claude / git / ci / api / other
+human / codex / cursor / claude / git / ci / api / spec-kit / other
 ```
 
 查看完整的本机帮助：
 
 ```bash
-docker compose exec octura octura --help
+docker compose exec octura octura-doctor --help
 ```
 
 ## 现场分享建议
@@ -288,7 +316,7 @@ docker compose down -v
 
 ```bash
 docker compose ps
-docker compose exec octura octura doctor
+docker compose exec octura octura-doctor
 ```
 
 如果镜像或代码刚刚更新，重新构建：
@@ -335,8 +363,8 @@ pnpm dev
 另一个终端中：
 
 ```bash
-pnpm cli -- doctor
-pnpm cli -- demo seed --profile specloop-core
+pnpm octura-doctor
+pnpm octura-demo-seed --profile specloop-core
 ```
 
 质量检查：

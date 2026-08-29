@@ -4,8 +4,8 @@
 
 ```bash
 docker compose up --build -d
-docker compose exec octura octura demo seed
-docker compose exec octura octura doctor
+docker compose exec octura octura-demo-seed
+docker compose exec octura octura-doctor
 ```
 
 浏览器打开：<http://localhost:3000/?project=octura-demo>
@@ -31,7 +31,7 @@ docker compose exec octura octura doctor
 在终端执行：
 
 ```bash
-docker compose exec octura octura record add \
+docker compose exec octura octura-record-add \
   --project octura-demo \
   --kind decision \
   --title "Keep execution outside Octura" \
@@ -65,7 +65,7 @@ docker compose exec octura octura record add \
 列出待审核记录：
 
 ```bash
-docker compose exec octura octura record list --project octura-demo --status captured
+docker compose exec octura octura-record-list --project octura-demo --status captured
 ```
 
 健康检查：

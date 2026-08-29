@@ -5,7 +5,7 @@
 ## 生成方式
 
 ```bash
-docker compose exec octura octura demo seed --profile specloop-core
+docker compose exec octura octura-demo-seed --profile specloop-core
 ```
 
 打开：<http://localhost:3000/?project=specloop-core>
@@ -34,4 +34,3 @@ pnpm --filter @specloop/cli test
 ```
 
 这里没有声称 `specloop-core` 全仓库构建、类型检查或全部测试已经通过。代码记录也明确标记为当前 working tree，而不是已发布提交。
-
